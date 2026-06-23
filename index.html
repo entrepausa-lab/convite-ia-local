@@ -155,13 +155,21 @@ button { font: inherit; }
 .ato1 {
   padding-top:    calc(38px + 80px);
   padding-bottom: 80px;
+  overflow:       visible;
 }
 
 .hero-grid {
   display:               grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 340px;
   gap:                   52px;
   align-items:           start;
+  overflow:              visible;
+}
+@media (max-width: 780px) {
+  .hero-grid {
+    grid-template-columns: 1fr 260px;
+    gap: 32px;
+  }
 }
 @media (max-width: 620px) {
   .hero-grid {
@@ -201,8 +209,11 @@ button { font: inherit; }
   line-height: 1.7;
   color:       var(--soft);
   max-width:   360px;
-  text-wrap:   pretty;
   transition:  color .5s ease;
+  /* 3 linhas fixas: as quebras <br> no HTML garantem o conteúdo,
+     overflow:hidden evita que modo erro (monospace mais largo) vaze */
+  overflow:    hidden;
+  height:      calc(1.45rem * 1.7 * 3);
 }
 
 /* data */
@@ -246,9 +257,12 @@ button { font: inherit; }
    CARD — wrapper de perspectiva + cartão 3D
 ───────────────────────────────────────────────────────────── */
 .card-wrap {
-  position:    relative;
-  perspective: 900px;
-  animation:   slideUp .8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  position:      relative;
+  perspective:   900px;
+  animation:     slideUp .8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  width:         100%;
+  overflow:      visible;
+  z-index:       10;
 }
 
 @keyframes slideUp {
@@ -407,11 +421,15 @@ button { font: inherit; }
    ATO 2 — PROGRAMA
 ───────────────────────────────────────────────────────────── */
 .ato2 {
-  padding:     68px 0;
-  border-top:  1px solid rgba(20,19,15,.09);
-  transition:  border-color .5s ease;
+  padding:      68px 0;
+  border-top:   1px solid rgba(20,19,15,.09);
+  border-width: 1px;
+  transition:   border-color .5s ease;
+  margin-top:   0;
 }
-.pb.error .ato2 { border-color: rgba(92,36,26,.12); }
+.pb.error .ato2 {
+  border-color: rgba(92,36,26,.12);
+}
 
 .section-label {
   font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
@@ -544,11 +562,15 @@ button { font: inherit; }
    ATO 3 — CTA
 ───────────────────────────────────────────────────────────── */
 .ato3 {
-  padding:    56px 0 84px;
-  border-top: 1px solid rgba(20,19,15,.09);
-  transition: border-color .5s ease;
+  padding:      56px 0 84px;
+  border-top:   1px solid rgba(20,19,15,.09);
+  border-width: 1px;
+  transition:   border-color .5s ease;
+  margin-top:   0;
 }
-.pb.error .ato3 { border-color: rgba(92,36,26,.12); }
+.pb.error .ato3 {
+  border-color: rgba(92,36,26,.12);
+}
 
 .cta-head {
   font-size:     clamp(1.7rem, 3.8vw, 2.4rem);
@@ -1147,7 +1169,7 @@ textarea::placeholder { color: var(--mute); opacity: 1; }
           </h1>
 
           <p class="lead">
-            Sem tempo pra filosofar, mas podemos praticar juntos uma saída possível.
+            Sem tempo pra filosofar,<br>mas podemos praticar juntos<br>uma saída possível.
           </p>
 
           <p class="meta-date">Bate-papo online · 0800 · vagas por ordem de interesse</p>
