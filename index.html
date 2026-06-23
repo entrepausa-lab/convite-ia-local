@@ -246,6 +246,18 @@ button { font: inherit; }
 .card-wrap {
   position:    relative;
   perspective: 900px;
+  animation:   slideUp .8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity:   0;
+    transform: translateY(140px);
+  }
+  to {
+    opacity:   1;
+    transform: translateY(0);
+  }
 }
 
 .card {
@@ -935,9 +947,26 @@ button { font: inherit; }
   position:    relative;
   border-radius: 2px;
   transition:  background .5s ease;
+  max-height:  90vh;
+  overflow-y:  auto;
+}
+@media (max-width: 640px) {
+  .modal {
+    max-width: 95vw;
+    padding: 28px 20px;
+    margin: 16px;
+  }
 }
 @media (max-width: 480px) {
-  .modal { padding: 32px 24px; }
+  .modal {
+    max-width: 95vw;
+    padding: 24px 16px;
+    margin: 12px;
+  }
+  .modal-title { font-size: 1.35rem; margin-bottom: 6px; }
+  .modal-sub { font-size: 0.95rem; margin-bottom: 22px; }
+  .field { margin-bottom: 18px; }
+  textarea { font-size: 1rem; }
 }
 
 .modal-close {
