@@ -185,13 +185,15 @@ button { font: inherit; }
 .headline {
   font-size:     clamp(2.5rem, 5.5vw, 3.6rem);
   font-weight:   500;
-  line-height:   1.1;
+  line-height:   1.15;
   letter-spacing: -.015em;
   color:         var(--ink);
   margin-bottom: 28px;
   transition:    color .5s ease;
+  text-wrap:     balance;
 }
 .headline em { font-style: italic; font-weight: 400; }
+.headline-line { display: inline-block; white-space: nowrap; }
 
 /* lead */
 .lead {
@@ -1141,7 +1143,7 @@ textarea::placeholder { color: var(--mute); opacity: 1; }
           <p class="kicker">24 jun · terça · 19h20 – 20h · online</p>
 
           <h1 class="headline">
-            O que roda debaixo<br>do capô do <em>gpt</em>?
+            <span class="headline-line">O que roda debaixo</span><br><span class="headline-line">do capô do <em>gpt</em>?</span>
           </h1>
 
           <p class="lead">
