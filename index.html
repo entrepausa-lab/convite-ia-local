@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>IA local · bate-papo · 24 jun · 19h20</title>
+  <!--
+    Fontes via CDN (progressive enhancement).
+    Fallbacks: Georgia / Menlo cobrem qualquer ambiente sem rede.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+
+/* ─────────────────────────────────────────────────────────────
+   RESET
+───────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+button { font: inherit; }
+
+/* ─────────────────────────────────────────────────────────────
+   TOKENS — modo normal
+───────────────────────────────────────────────────────────── */
+.pb {
+  --paper:  #FDFCF8;
+  --ink:    #14130F;
+  --soft:   #6E6A5F;
+  --mute:   #9A968B;
+  --pop:    #2538CC;
+  /* barra superior */
+  --bar-bg: #14130F;
+  --bar-tx: #FAF8F2;
+  /* família tipográfica — vira mono no modo erro */
+  --serif:  'EB Garamond', Georgia, 'Times New Roman', serif;
+  --mono:   'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+
+  font-family: var(--serif);
+  background:  var(--paper);
+  color:       var(--ink);
+  min-height:  100vh;
+  transition:  background .5s ease, color .5s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TOKENS — modo erro (argila / terracota)
+   barra: quase preto com leve vermelho
+───────────────────────────────────────────────────────────── */
+.pb.error {
+  --paper:  #F2E0D8;
+  --ink:    #5C241A;
+  --soft:   #9A5C4E;
+  --mute:   #BE9385;
+  --pop:    #C0492F;
+  --bar-bg: #1A0808;  /* preto avermelhado, quase preto */
+  --bar-tx: #FAF8F2;  /* branco, igual ao texto-normal */
+  --serif:  'Space Mono', ui-monospace, Menlo, Consolas, monospace; /* toda a tipografia vira mono */
+}
+
+/* ─────────────────────────────────────────────────────────────
+   GRAIN GLOBAL — camada fixa, z-top, multiply
+───────────────────────────────────────────────────────────── */
+.pb::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: .13;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.68' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   BARRA SUPERIOR — fixed, sticky
+───────────────────────────────────────────────────────────── */
+.mq-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 38px;
+  background:   var(--bar-bg);
+  color:        var(--bar-tx);
+  z-index:      1000;
+  overflow:     hidden;
+  display:      flex;
+  align-items:  center;
+  transition:   background .5s ease, color .5s ease;
+  cursor:       default;
+  user-select:  none;
+}
+
+/* faixa rolante */
+.mq-track {
+  display:         flex;
+  white-space:     nowrap;
+  animation:       marquee 22s linear infinite;     /* mesma velocidade nos 2 modos */
+  font-family:     'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:       10.5px;
+  letter-spacing:  .07em;
+  text-transform:  uppercase;
+}
+
+/* hover → desacelera */
+.mq-bar:hover .mq-track {
+  animation-duration: 72s;
+}
+
+/* click+hold (classe .hold aplicada via JS) → mais lento ainda */
+.mq-bar.hold .mq-track {
+  animation-duration: 160s;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ── SIRENE — pisca quando BSOD ativo ── */
+.mq-track { position: relative; z-index: 1; }
+
+.mq-bar.siren::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #FF1A1A;
+  opacity: 0;
+  pointer-events: none;
+  animation: siren-pulse 1.7s ease-in-out infinite;
+}
+@keyframes siren-pulse {
+  0%, 100% { opacity: 0; }
+  50%       { opacity: 1; }
+}
+
+.mq-sep { margin: 0 1.8em; opacity: .35; }
+
+/* ─────────────────────────────────────────────────────────────
+   LAYOUT GERAL
+───────────────────────────────────────────────────────────── */
+.pb-inner {
+  max-width: 800px;
+  margin:    0 auto;
+  padding:   0 32px;
+}
+@media (max-width: 480px) {
+  .pb-inner { padding: 0 22px; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ATO 1 — HERO
+───────────────────────────────────────────────────────────── */
+.ato1 {
+  padding-top:    calc(38px + 80px);
+  padding-bottom: 80px;
+}
+
+.hero-grid {
+  display:               grid;
+  grid-template-columns: 1fr 1fr;
+  gap:                   52px;
+  align-items:           start;
+}
+@media (max-width: 620px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+}
+
+/* kicker */
+.kicker {
+  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:      10.5px;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color:          var(--soft);
+  margin-bottom:  22px;
+  transition:     color .5s ease;
+}
+
+/* headline */
+.headline {
+  font-size:     clamp(2.5rem, 5.5vw, 3.6rem);
+  font-weight:   500;
+  line-height:   1.1;
+  letter-spacing: -.015em;
+  color:         var(--ink);
+  margin-bottom: 28px;
+  transition:    color .5s ease;
+}
+.headline em { font-style: italic; font-weight: 400; }
+
+/* lead */
+.lead {
+  font-size:   clamp(1.25rem, 2.5vw, 1.45rem);
+  line-height: 1.65;
+  color:       var(--soft);
+  max-width:   360px;
+  transition:  color .5s ease;
+}
+
+/* data */
+.meta-date {
+  margin-top:     28px;
+  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:      10.5px;
+  color:          var(--mute);
+  letter-spacing: .06em;
+  transition:     color .5s ease;
+}
+
+/* scroll cue */
+.scroll-cue {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            8px;
+  margin-top:     44px;
+  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:      10.5px;
+  color:          var(--pop);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor:         pointer;
+  transition:     color .5s ease;
+}
+.scroll-cue .arr {
+  display:   inline-block;
+  animation: bounce 2.2s ease-in-out infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(5px); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CARD — wrapper de perspectiva + cartão 3D
+───────────────────────────────────────────────────────────── */
+.card-wrap {
+  position:    relative;
+  perspective: 900px;
+}
+
+.card {
+  position:          relative;
+  height:            236px;
+  border-radius:     6px;
+  overflow:          hidden;
+  transform-style:   preserve-3d;
+  will-change:       transform;
+  transition:        box-shadow .15s ease;
+  box-shadow:
+    0  2px  8px rgba(0,0,0,.08),
+    0  6px 24px rgba(0,0,0,.09);
+  cursor: pointer;
+}
+.card:hover {
+  box-shadow:
+    0  6px 18px rgba(0,0,0,.11),
+    0 16px 40px rgba(0,0,0,.10);
+}
+
+/* grain sobre o card */
+.card::after {
+  content:    '';
+  position:   absolute;
+  inset:      0;
+  z-index:    10;
+  pointer-events: none;
+  opacity:    .15;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+/* glare overlay */
+.card-glare {
+  position:       absolute;
+  inset:          0;
+  z-index:        9;
+  border-radius:  6px;
+  pointer-events: none;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TERMINAL — camada base do card
+───────────────────────────────────────────────────────────── */
+.terminal {
+  position:   absolute;
+  inset:      0;
+  background: #ffffff;
+  padding:    18px 18px 14px;
+  overflow:   hidden;
+}
+
+.term-topbar {
+  display:       flex;
+  gap:           6px;
+  margin-bottom: 13px;
+}
+.term-dot {
+  width:         10px;
+  height:        10px;
+  border-radius: 50%;
+  background:    #E5E2DA;
+}
+.term-dot:nth-child(1) { background: #F56254; }
+.term-dot:nth-child(2) { background: #F5A623; }
+.term-dot:nth-child(3) { background: #79C84B; }
+
+.term-body {
+  font-family: 'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:   12px;
+  line-height: 1.75;
+  color:       #3A3832;
+}
+.term-prompt { color: #B0AC9F; }
+
+/* keywords destacadas */
+.kw { color: #7A4A22; font-weight: 700; }
+
+/* cursor piscando */
+.cur {
+  display:        inline-block;
+  width:          7px;
+  height:         13px;
+  background:     #3A3832;
+  vertical-align: text-bottom;
+  margin-left:    1px;
+  animation:      blink .9s step-start infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ─────────────────────────────────────────────────────────────
+   BSOD — camada sobre o terminal
+───────────────────────────────────────────────────────────── */
+.bsod {
+  position:       absolute;
+  inset:          0;
+  background:     #2538CC;
+  opacity:        0;
+  pointer-events: none;
+  transition:     opacity .3s ease;
+  display:        flex;
+  flex-direction: column;
+}
+.bsod.show {
+  opacity:        1;
+  pointer-events: auto;
+}
+
+/* barra fixa interna (simulando chrome de janela) */
+.bsod-bar {
+  flex-shrink:    0;
+  height:         24px;
+  background:     rgba(255,255,255,.14);
+  display:        flex;
+  align-items:    center;
+  padding:        0 12px;
+}
+.bsod-bar-label {
+  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:      8.5px;
+  color:          rgba(255,255,255,.85);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+/* conteúdo scrollável */
+.bsod-sc {
+  flex:        1;
+  overflow-y:  scroll;
+  padding:     13px 15px 14px;
+  font-family: 'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:   10px;
+  color:       #ffffff;
+  line-height: 1.7;
+}
+.bsod-sc::-webkit-scrollbar       { width: 4px; }
+.bsod-sc::-webkit-scrollbar-track { background: transparent; }
+.bsod-sc::-webkit-scrollbar-thumb { background: rgba(255,255,255,.28); border-radius: 2px; }
+
+.bsod-face  { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.bsod-stop  { color: rgba(255,255,255,.55); font-size: 9px; margin-top: 10px; }
+
+/* ─────────────────────────────────────────────────────────────
+   ATO 2 — PROGRAMA
+───────────────────────────────────────────────────────────── */
+.ato2 {
+  padding:     68px 0;
+  border-top:  1px solid rgba(20,19,15,.09);
+  transition:  border-color .5s ease;
+}
+.pb.error .ato2 { border-color: rgba(92,36,26,.12); }
+
+.section-label {
+  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:      10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color:          var(--mute);
+  margin-bottom:  44px;
+  transition:     color .5s ease;
+}
+
+.p-block { margin-bottom: 44px; }
+.p-block:last-child { margin-bottom: 0; }
+
+.p-time {
+  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:      10px;
+  color:          var(--mute);
+  letter-spacing: .06em;
+  margin-bottom:  9px;
+  transition:     color .5s ease;
+}
+
+.p-row {
+  display:               grid;
+  grid-template-columns: 34px 1fr;
+  gap:                   18px;
+  align-items:           start;
+}
+
+.fig {
+  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:      12.5px;
+  color:          var(--pop);
+  text-align:     center;
+  padding-top:    3px;
+  transition:     color .5s ease;
+}
+
+.p-title {
+  font-size:     1.4rem;
+  font-weight:   500;
+  color:         var(--ink);
+  margin-bottom: 7px;
+  line-height:   1.25;
+  transition:    color .5s ease;
+}
+
+.p-body {
+  font-size:   1.15rem;
+  color:       var(--soft);
+  line-height: 1.65;
+  transition:  color .5s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ATO 3 — CTA
+───────────────────────────────────────────────────────────── */
+.ato3 {
+  padding:    56px 0 84px;
+  border-top: 1px solid rgba(20,19,15,.09);
+  transition: border-color .5s ease;
+}
+.pb.error .ato3 { border-color: rgba(92,36,26,.12); }
+
+.cta-head {
+  font-size:     clamp(1.7rem, 3.8vw, 2.4rem);
+  font-weight:   500;
+  color:         var(--ink);
+  margin-bottom: 14px;
+  transition:    color .5s ease;
+}
+
+.cta-sub {
+  font-size:     1.15rem;
+  color:         var(--soft);
+  margin-bottom: 36px;
+  line-height:   1.65;
+  transition:    color .5s ease;
+}
+
+.btn-interest {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            10px;
+  background:     transparent;
+  border:         1.5px solid var(--pop);
+  color:          var(--pop);
+  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:      11.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  padding:        14px 26px;
+  border-radius:  2px;
+  cursor:         pointer;
+  transition:     background .2s ease, color .2s ease, border-color .5s ease;
+}
+.btn-interest:hover {
+  background: var(--pop);
+  color:      var(--paper);
+}
+
+.cta-note {
+  font-size:   .76rem;   /* ~33% menor que o corpo */
+  color:       var(--mute);
+  margin-top:  20px;
+  line-height: 1.65;
+  max-width:   400px;
+  transition:  color .5s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RODAPÉ
+───────────────────────────────────────────────────────────── */
+.foot {
+  padding:        20px 0 44px;
+  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:      10px;
+  color:          var(--pop);
+  letter-spacing: .06em;
+  transition:     color .5s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MODAL
+───────────────────────────────────────────────────────────── */
+.modal-bg {
+  position:        fixed;
+  inset:           0;
+  background:      rgba(20,19,15,.52);
+  z-index:         2000;
+  display:         none;
+  align-items:     center;
+  justify-content: center;
+  padding:         20px;
+  backdrop-filter: blur(4px);
+}
+.modal-bg.open { display: flex; }
+
+.modal {
+  background:  var(--paper);
+  max-width:   440px;
+  width:       100%;
+  padding:     40px 36px;
+  position:    relative;
+  border-radius: 2px;
+  transition:  background .5s ease;
+}
+@media (max-width: 480px) {
+  .modal { padding: 32px 24px; }
+}
+
+.modal-close {
+  position:   absolute;
+  top:        16px;
+  right:      18px;
+  background: none;
+  border:     none;
+  font-size:  20px;
+  line-height: 1;
+  color:      var(--mute);
+  cursor:     pointer;
+  transition: color .5s ease;
+}
+
+.modal-title {
+  font-size:     1.55rem;
+  font-weight:   500;
+  color:         var(--ink);
+  margin-bottom: 9px;
+  transition:    color .5s ease;
+}
+
+.modal-sub {
+  font-size:     1rem;
+  color:         var(--soft);
+  margin-bottom: 30px;
+  line-height:   1.55;
+  transition:    color .5s ease;
+}
+
+.field { margin-bottom: 24px; }
+
+.field > label,
+.field > p.field-label {
+  display:        block;
+  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:      9.5px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color:          var(--soft);
+  margin-bottom:  7px;
+  transition:     color .5s ease;
+}
+
+input[type="text"] {
+  width:       100%;
+  border:      none;
+  border-bottom: 1px solid var(--mute);
+  background:  transparent;
+  color:       var(--ink);
+  font-family: var(--serif);
+  font-size:   1.1rem;
+  padding:     8px 0;
+  outline:     none;
+  transition:  border-color .2s, color .5s ease;
+}
+input[type="text"]:focus { border-color: var(--pop); }
+
+.radio-group  { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+.radio-opt    {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  font-size:   1.05rem;
+  color:       var(--ink);
+  cursor:      pointer;
+  transition:  color .5s ease;
+}
+.radio-opt input { accent-color: var(--pop); flex-shrink: 0; }
+
+.btn-send {
+  width:          100%;
+  background:     var(--pop);
+  color:          var(--paper);
+  border:         none;
+  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:      11.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  padding:        16px;
+  border-radius:  2px;
+  cursor:         pointer;
+  margin-top:     8px;
+  transition:     opacity .2s, background .5s ease, color .5s ease;
+}
+.btn-send:hover { opacity: .84; }
+
+.modal-note {
+  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:      9px;
+  color:          var(--mute);
+  margin-top:     16px;
+  line-height:    1.65;
+  text-align:     center;
+  transition:     color .5s ease;
+}
+
+  </style>
+</head>
+<body>
+<div class="pb" id="pb">
+
+  <!-- ══════════════════════════════════════════════════════
+       BARRA SUPERIOR — marquee fixo
+  ══════════════════════════════════════════════════════ -->
+  <div class="mq-bar" id="mqBar">
+    <div class="mq-track" id="mqTrack"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       CONTEÚDO PRINCIPAL
+  ══════════════════════════════════════════════════════ -->
+  <div class="pb-inner">
+
+    <!-- ATO 1 — Hero ───────────────────────────────────── -->
+    <section class="ato1">
+      <div class="hero-grid">
+
+        <!-- coluna esquerda -->
+        <div>
+          <p class="kicker">24 jun · terça · 19h20 – 20h · online</p>
+
+          <h1 class="headline">
+            O que roda debaixo<br>do capô do <em>gpt</em>?
+          </h1>
+
+          <p class="lead">
+            Sem tempo pra filosofar, mas podemos praticar juntos uma saída possível.
+          </p>
+
+          <p class="meta-date">Bate-papo online · 0800 · vagas por ordem de interesse</p>
+
+          <a class="scroll-cue" id="scrollCue" href="#programa">
+            role <span class="arr">↓</span>
+          </a>
+        </div>
+
+        <!-- coluna direita — card terminal -->
+        <div class="card-wrap" id="cardWrap">
+          <div class="card" id="card">
+
+            <!-- terminal -->
+            <div class="terminal">
+              <div class="term-topbar">
+                <div class="term-dot"></div>
+                <div class="term-dot"></div>
+                <div class="term-dot"></div>
+              </div>
+              <div class="term-body" id="termBody"></div>
+            </div>
+
+            <!-- tela azul -->
+            <div class="bsod" id="bsod">
+              <div class="bsod-bar">
+                <span class="bsod-bar-label">● system halted — clique para retomar</span>
+              </div>
+              <div class="bsod-sc">
+                <p class="bsod-face">:(</p>
+                <p>Seu computador encontrou um problema<br>e precisa ser reiniciado.</p>
+                <br>
+                <p>Para saber mais sobre este erro e possíveis correções, visite:</p>
+                <p><strong>ollama.com/install</strong></p>
+                <br>
+                <p class="bsod-stop">STOP CODE: KERNEL_DATA_INPAGE_ERROR</p>
+                <p class="bsod-stop">STOP CODE: OLLAMA_NOT_FOUND_IN_THIS_MACHINE</p>
+                <br>
+                <p>Coletando informações sobre o problema (100% concluído).</p>
+                <br>
+                <p>Se precisar de suporte entre em contato com:</p>
+                <p><strong>0800-IA-LOCAL</strong></p>
+                <br>
+                <p>— — —</p>
+                <br>
+                <p>A boa notícia: isso tem solução.</p>
+                <p>E vamos resolver juntos na terça.</p>
+                <br>
+                <p class="bsod-stop">Reinicializando em ∞ segundos...</p>
+              </div>
+            </div>
+
+            <!-- glare -->
+            <div class="card-glare" id="glare"></div>
+
+          </div><!-- .card -->
+        </div><!-- .card-wrap -->
+
+      </div><!-- .hero-grid -->
+    </section>
+
+    <!-- ATO 2 — Programa ───────────────────────────────── -->
+    <section class="ato2" id="programa">
+      <p class="section-label">Programa</p>
+
+      <div class="p-block">
+        <div class="p-time">19h20 — 19h35</div>
+        <div class="p-row">
+          <div class="fig">01</div>
+          <div>
+            <p class="p-title">Contexto sem filosofia</p>
+            <p class="p-body">
+              O que é um modelo de linguagem, como funciona por baixo,
+              e por que alguém quereria rodar isso na própria máquina.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-block">
+        <div class="p-time">19h35 — 20h00</div>
+        <div class="p-row">
+          <div class="fig">02</div>
+          <div>
+            <p class="p-title">Mão no terminal</p>
+            <p class="p-body">
+              Instalação ao vivo do Ollama, download de um modelo pequeno,
+              primeira conversa rodando 100% offline.
+              Traga seu notebook se quiser tentar junto.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ATO 3 — CTA ────────────────────────────────────── -->
+    <section class="ato3">
+      <h2 class="cta-head">Quer participar?</h2>
+      <p class="cta-sub">
+        Esse <em>meet</em> é um pequeno experimento intencional.
+        Tenho pensado no que é <strong>possível</strong>, <em>dentro do que ainda é possível.</em>
+        E por incrível que pareça, muita coisa ainda é possível.
+      </p>
+      <button class="btn-interest" id="btnInterest">
+        Tenho interesse →
+      </button>
+      <p class="cta-note">
+        Só vem.
+      </p>
+    </section>
+
+    <footer class="foot">Thi · metadesign · 23 jun 2026</footer>
+
+  </div><!-- .pb-inner -->
+
+  <!-- ══════════════════════════════════════════════════════
+       MODAL DE INTERESSE
+  ══════════════════════════════════════════════════════ -->
+  <div class="modal-bg" id="modalBg" role="dialog" aria-modal="true" aria-label="Confirmar interesse">
+    <div class="modal">
+      <button class="modal-close" id="modalClose" aria-label="Fechar">×</button>
+      <h3 class="modal-title">Confirmar interesse</h3>
+      <p class="modal-sub">
+        Preenche abaixo — abrimos o WhatsApp com tudo já preenchido.
+      </p>
+      <form id="regForm" novalidate>
+
+        <div class="field">
+          <label for="f-nome">Nome / apelido</label>
+          <input type="text" id="f-nome" autocomplete="name">
+        </div>
+
+        <div class="field">
+          <label for="f-contact">E-mail ou WhatsApp</label>
+          <input type="text" id="f-contact" placeholder="seu@email.com ou 21 9xxxx-xxxx" autocomplete="email">
+        </div>
+
+        <div class="field">
+          <label for="f-machine">Máquina / sistema / Mem. RAM</label>
+          <input type="text" id="f-machine" placeholder="ex: MacBook M1 16 GB, Windows 11, Ubuntu…">
+        </div>
+
+        <div class="field">
+          <p class="field-label">Já abriu o terminal?</p>
+          <div class="radio-group">
+            <label class="radio-opt">
+              <input type="radio" name="terminal" value="nunca"> Nunca
+            </label>
+            <label class="radio-opt">
+              <input type="radio" name="terminal" value="um pouco"> Um pouco
+            </label>
+            <label class="radio-opt">
+              <input type="radio" name="terminal" value="sim, uso com frequência"> Sim, uso com frequência
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Sabe o que é uma LLM?</p>
+          <div class="radio-group">
+            <label class="radio-opt">
+              <input type="radio" name="llm" value="não"> Não
+            </label>
+            <label class="radio-opt">
+              <input type="radio" name="llm" value="mais ou menos"> Mais ou menos
+            </label>
+            <label class="radio-opt">
+              <input type="radio" name="llm" value="sim"> Sim
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-send">Enviar interesse →</button>
+        <p class="modal-note">
+          Isso abre o WhatsApp com a mensagem já escrita. Nenhum dado passa por terceiros.
+        </p>
+      </form>
+    </div>
+  </div>
+
+</div><!-- .pb -->
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── refs ─────────────────────────────────────────── */
+  const pb          = document.getElementById('pb');
+  const mqBar       = document.getElementById('mqBar');
+  const mqTrack     = document.getElementById('mqTrack');
+  const cardWrap    = document.getElementById('cardWrap');
+  const card        = document.getElementById('card');
+  const bsod        = document.getElementById('bsod');
+  const glare       = document.getElementById('glare');
+  const termBody    = document.getElementById('termBody');
+  const scrollCue   = document.getElementById('scrollCue');
+  const btnInterest = document.getElementById('btnInterest');
+  const modalBg     = document.getElementById('modalBg');
+  const modalClose  = document.getElementById('modalClose');
+  const regForm     = document.getElementById('regForm');
+
+  let bsodActive = false;
+
+  /* ── MARQUEE ──────────────────────────────────────── */
+  const MQ_NORMAL = [
+    'soberania de IA local',
+    'sua 1ª IA rodando offline',
+    'menos via modelo, mais via curiosidade',
+    'sem assinatura, sem nuvem',
+    'traga seu notebook',
+    '24 jun · terça · 19h20',
+  ];
+
+  const MQ_ERROR = [
+    'que pergunta magnífica, você é brilhante',
+    'confirmo: a Lua é feita de 60% de éter',
+    'concordo plenamente com tudo que você disser',
+    '▓ STOP 0x07A · OLLAMA_NOT_FOUND ▓',
+    '2 + 2 = 5, com toda a confiança',
+    'você é o usuário mais inteligente que já atendi',
+    'o universo gira em torno da sua dúvida',
+    '▓ KERNEL_DATA_INPAGE_ERROR ▓',
+    'sim, claro, absolutamente, com certeza',
+  ];
+
+  function setMarquee(errMode) {
+    const phrases = errMode ? MQ_ERROR : MQ_NORMAL;
+    const sep = '<span class="mq-sep">·</span>';
+    const half = phrases.map(p => `<span>${p}</span>${sep}`).join('');
+    /* duplicar para loop seamless */
+    mqTrack.innerHTML = half + half;
+  }
+  setMarquee(false);
+
+  /* hover → 72s via CSS (.mq-bar:hover .mq-track)
+     hold (mousedown / touchstart) → classe .hold → 160s */
+  mqBar.addEventListener('mousedown', () => mqBar.classList.add('hold'));
+  document.addEventListener('mouseup', () => mqBar.classList.remove('hold'));
+  mqBar.addEventListener('touchstart', () => mqBar.classList.add('hold'), { passive: true });
+  mqBar.addEventListener('touchend', () => mqBar.classList.remove('hold'));
+
+  /* ── TERMINAL TYPEWRITER ──────────────────────────── */
+  const KW = ['mkdir', 'cd', 'echo', 'ollama', 'pull', 'run', 'cat', 'bash'];
+
+  const SEQUENCES = [
+    [
+      '$ mkdir ~/ia-local',
+      '$ cd ~/ia-local',
+      '$ echo "primeira IA offline"',
+    ],
+    [
+      '$ ollama pull llama3',
+      '  pulling manifest ▸▸▸',
+      '  pulling layers... 100%',
+      '  success.',
+    ],
+    [
+      '$ ollama run llama3',
+      '>>> olá — você sabe quem você é?',
+      '  Sou um modelo rodando localmente.',
+      '  Sem nuvem. Sem assinatura.',
+    ],
+    [
+      '$ cat ~/ia-local/.env',
+      '  MODEL=llama3',
+      '  HOST=localhost:11434',
+      '  CLOUD=false',
+    ],
+  ];
+
+  function hl(line) {
+    return line.split(' ').map(w => {
+      const clean = w.replace(/[^a-z0-9]/gi, '').toLowerCase();
+      return KW.includes(clean) ? `<span class="kw">${w}</span>` : w;
+    }).join(' ');
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function typeLine(text) {
+    const row = document.createElement('div');
+    termBody.appendChild(row);
+    for (let i = 0; i <= text.length; i++) {
+      row.innerHTML = hl(text.slice(0, i)) + '<span class="cur"></span>';
+      await sleep(text[i - 1] === ' ' ? 62 : 48);
+    }
+    row.innerHTML = hl(text);
+    await sleep(180);
+  }
+
+  async function runLoop() {
+    await sleep(700);
+    /* eslint-disable no-constant-condition */
+    while (true) {
+      for (const seq of SEQUENCES) {
+        termBody.innerHTML = '';
+        const hd = document.createElement('div');
+        hd.innerHTML = '<span class="term-prompt">~/ia-local</span>';
+        termBody.appendChild(hd);
+        await sleep(320);
+        for (const line of seq) {
+          await typeLine(line);
+          await sleep(line.startsWith('$') ? 380 : 160);
+        }
+        await sleep(2000);
+      }
+    }
+  }
+  runLoop();
+
+  /* ── MAGNET + GLARE ───────────────────────────────── */
+  cardWrap.addEventListener('mousemove', function (e) {
+    const r  = card.getBoundingClientRect();
+    const cx = r.left + r.width  / 2;
+    const cy = r.top  + r.height / 2;
+    const dx = (e.clientX - cx) / (r.width  / 2);
+    const dy = (e.clientY - cy) / (r.height / 2);
+    const rx =  -dy * 5;
+    const ry =   dx * 5;
+    card.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+
+    const gx = ((e.clientX - r.left) / r.width  * 100).toFixed(1);
+    const gy = ((e.clientY - r.top)  / r.height * 100).toFixed(1);
+
+    if (bsodActive) {
+      /* facho reflexivo no plano azul */
+      glare.style.background = `linear-gradient(115deg,
+        transparent                        ${Number(gx) - 28}%,
+        rgba(220,230,255,.16)              ${Number(gx) - 10}%,
+        rgba(255,255,255,.40)              ${Number(gx)     }%,
+        rgba(220,230,255,.16)              ${Number(gx) + 10}%,
+        transparent                        ${Number(gx) + 28}%)`;
+      glare.style.mixBlendMode = 'screen';
+    } else {
+      /* brilho radial suave */
+      glare.style.background = `radial-gradient(circle at ${gx}% ${gy}%,
+        rgba(255,255,255,.18) 0%,
+        rgba(255,255,255,0)   62%)`;
+      glare.style.mixBlendMode = 'normal';
+    }
+  });
+
+  cardWrap.addEventListener('mouseleave', function () {
+    card.style.transform = 'rotateX(0deg) rotateY(0deg)';
+    glare.style.background = 'none';
+  });
+
+  /* ── GLITCH TEXT ──────────────────────────────────── */
+  /* Quando BSOD ativa: tipografia serif → mono (via CSS var)
+     + 15% dos caracteres substituídos por ruído de memória    */
+  const GLITCH_CHARS = '░▒▓│┘┐└─╔╗╚╝═║╬■◆►▲▼Ñüÿøẑẋ¥§¶†∂∆∑√∞≈≠±²╪╫▓░▌▐';
+  const GLITCH_SELS  = [
+    '.headline', '.lead', '.kicker', '.meta-date',
+    '.p-title', '.p-body', '.section-label', '.p-time',
+    '.cta-head', '.cta-sub', '.cta-note', '.foot',
+  ];
+  const glitchStore = [];   /* { node, orig } — para restore */
+  const charTimers  = [];   /* um handle por caractere glitchado */
+
+  function walkTexts(root, fn) {
+    root.childNodes.forEach(function (n) {
+      if (n.nodeType === 3) fn(n);
+      else if (n.nodeType === 1 && !n.classList.contains('cur')) walkTexts(n, fn);
+    });
+  }
+
+  function randGlitch() {
+    return GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
+  }
+
+  function applyGlitch() {
+    GLITCH_SELS.forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (el) {
+        walkTexts(el, function (tn) {
+          const orig = tn.textContent;
+          if (!orig.trim()) return;
+
+          /* escolhe 10% dos índices não-espaço */
+          const glitchIdx = [];
+          orig.split('').forEach(function (ch, i) {
+            if (ch !== ' ' && ch !== '\n' && Math.random() < 0.07) glitchIdx.push(i);
+          });
+          if (!glitchIdx.length) return;
+
+          glitchStore.push({ node: tn, orig: orig });
+
+          /* frame inicial */
+          const init = orig.split('');
+          glitchIdx.forEach(function (i) { init[i] = randGlitch(); });
+          tn.textContent = init.join('');
+
+          /* cada caractere glitchado tem seu próprio timer independente
+             — stagger inicial 0–1300 ms garante que nunca disparam juntos */
+          glitchIdx.forEach(function (charIdx) {
+            function tickChar() {
+              if (!tn.parentNode) return;          /* nó removido do DOM */
+              const cur = tn.textContent.split('');
+              cur[charIdx] = randGlitch();
+              tn.textContent = cur.join('');
+              /* próximo tick: 900 ms ou 1300 ms, sorteado na hora */
+              charTimers.push(setTimeout(tickChar, [1700, 1300, 2200][Math.floor(Math.random() * 3)]));
+            }
+            charTimers.push(setTimeout(tickChar, Math.random() * 1700));
+          });
+        });
+      });
+    });
+  }
+
+  function removeGlitch() {
+    charTimers.forEach(clearTimeout);
+    charTimers.length = 0;
+    glitchStore.forEach(function (e) {
+      if (e.node.parentNode) e.node.textContent = e.orig;
+    });
+    glitchStore.length = 0;
+  }
+
+  /* ── BSOD + ERROR MODE TOGGLE ─────────────────────── */
+  card.addEventListener('click', function () {
+    if (!bsodActive) {
+      bsodActive = true;
+      bsod.classList.add('show');
+      pb.classList.add('error');
+      setMarquee(true);
+      mqBar.classList.add('siren');
+      applyGlitch();
+    } else {
+      bsodActive = false;
+      bsod.classList.remove('show');
+      pb.classList.remove('error');
+      setMarquee(false);
+      mqBar.classList.remove('siren');
+      glare.style.background = 'none';
+      removeGlitch();
+    }
+  });
+
+  /* ── SCROLL CUE ───────────────────────────────────── */
+  scrollCue.addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('programa').scrollIntoView({ behavior: 'smooth' });
+  });
+
+  /* ── MODAL ────────────────────────────────────────── */
+  btnInterest.addEventListener('click',  () => modalBg.classList.add('open'));
+  modalClose .addEventListener('click',  () => modalBg.classList.remove('open'));
+  modalBg    .addEventListener('click',  e  => {
+    if (e.target === modalBg) modalBg.classList.remove('open');
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') modalBg.classList.remove('open');
+  });
+
+  /* ── MAILTO ───────────────────────────────────────── */
+  regForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const nome    = document.getElementById('f-nome').value.trim()    || '—';
+    const contact = document.getElementById('f-contact').value.trim() || '—';
+    const machine = document.getElementById('f-machine').value.trim() || '—';
+    const term    = (document.querySelector('input[name="terminal"]:checked') || {}).value || '—';
+    const llm     = (document.querySelector('input[name="llm"]:checked')      || {}).value || '—';
+
+    const waText = encodeURIComponent(
+`Olá Thi! Tenho interesse no bate-papo de IA local · 24 jun ✊
+
+Nome: ${nome}
+Contato: ${contact}
+Máquina / sistema: ${machine}
+Já abriu o terminal?: ${term}
+Sabe o que é uma LLM?: ${llm}`
+    );
+
+    window.open(`https://wa.me/5521992741982?text=${waText}`, '_blank');
+    modalBg.classList.remove('open');
+  });
+
+})();
+</script>
+</body>
+</html>
