@@ -256,7 +256,11 @@ html.err::-webkit-scrollbar-thumb:hover {
   /* no mobile: padding extra pra deixar espaço pra sombra do card projetar */
 }
 @media (max-width: 640px) {
-  .ato1 { padding-bottom: 120px; }
+  .pb   { min-height: auto; }
+  .ato1 {
+    padding-top:    calc(38px + 36px);
+    padding-bottom: 60px;
+  }
 }
 
 .hero-grid {
