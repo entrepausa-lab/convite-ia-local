@@ -182,30 +182,42 @@ html.err::-webkit-scrollbar-thumb:hover {
   user-select:  none;
 }
 
-/* faixa rolante */
+/* ── MARQUEE LEGADO (desativado) ───────────────────────────────
+   Loop por translateX(-50%): dependia da largura par do conteúdo
+   duplicado → "pulava" em viewports estreitos (mobile). Mantido como
+   referência; substituído pela versão unificada abaixo.
+.mq-track {
+  animation: marquee 22s linear infinite;
+}
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+─────────────────────────────────────────────────────────────── */
+
+/* faixa rolante — UNIFICADA (loop seamless idêntico em mobile/web) */
 .mq-track {
   display:         flex;
+  flex-wrap:       nowrap;
   white-space:     nowrap;
-  animation:       marquee 22s linear infinite;     /* mesma velocidade nos 2 modos */
+  width:           max-content;                     /* largura real do conteúdo, não do container */
   font-family:     'Space Mono', ui-monospace, Menlo, Consolas, monospace;
   font-size:       10.5px;
   letter-spacing:  .07em;
   text-transform:  uppercase;
+  will-change:     transform;
+  /* metade do conteúdo é duplicado no JS; -50% = exatamente 1 cópia */
+  animation:       marquee var(--mq-dur, 22s) linear infinite;
 }
+/* cada metade ocupa exatamente 50% → loop matematicamente seamless */
+.mq-track > .mq-half { display: flex; flex-wrap: nowrap; flex-shrink: 0; }
 
-/* hover → desacelera */
-.mq-bar:hover .mq-track {
-  animation-duration: 72s;
-}
-
-/* click+hold (classe .hold aplicada via JS) → mais lento ainda */
-.mq-bar.hold .mq-track {
-  animation-duration: 160s;
-}
+/* 3 estados unificados (mesmos em mobile e web) via --mq-dur:
+   normal 22s · slow (hover desktop / press mobile) 72s · hold 160s */
+.mq-bar:hover     { --mq-dur: 72s; }   /* desktop: mouse */
+.mq-bar.press     { --mq-dur: 72s; }   /* mobile: toque sustentado curto */
+.mq-bar.hold      { --mq-dur: 160s; }  /* press longo / segurar */
 
 @keyframes marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
 }
 
 /* ── SIRENE — pisca quando BSOD ativo ── */
@@ -1281,10 +1293,11 @@ html.err::-webkit-scrollbar-thumb:hover {
 /* inputs ao vivo (parte 6 — link wa.me)
    selector .code-sc .demo-in vence a regra global input[type="text"] */
 .code-sc .demo-in {
-  background:    #1B1E26;
-  border:        1px solid #2C313C;
-  color:         #79C0FF;          /* nome (dinâmico) — azul */
-  caret-color:   #79C0FF;
+  background:    #242936;          /* fundo mais claro p/ contraste do texto */
+  border:        1px solid #3A4150;
+  color:         #9FD2FF;          /* nome (dinâmico) — azul claro */
+  -webkit-text-fill-color: #9FD2FF; /* vence regra global input[type=text] */
+  caret-color:   #9FD2FF;
   font-family:   'Space Mono', ui-monospace, Menlo, Consolas, monospace;
   font-size:     11px;
   padding:       5px 9px;
@@ -1292,17 +1305,18 @@ html.err::-webkit-scrollbar-thumb:hover {
   outline:       none;
   width:         132px;
 }
-.code-sc .demo-in:focus        { border-color: #79C0FF; }
-.code-sc .demo-in--phone       { color: #FFD479; caret-color: #FFD479; }  /* telefone — âmbar */
+.code-sc .demo-in::placeholder { color: #6B7385; -webkit-text-fill-color: #6B7385; opacity: 1; }
+.code-sc .demo-in:focus        { border-color: #9FD2FF; }
+.code-sc .demo-in--phone       { color: #FFD479; -webkit-text-fill-color: #FFD479; caret-color: #FFD479; }  /* telefone — âmbar */
 .code-sc .demo-in--phone:focus { border-color: #FFD479; }
-.code-sc .demo-in--msg         { color: #D2A8FF; caret-color: #D2A8FF; width: 180px; }  /* mensagem — roxo */
+.code-sc .demo-in--msg         { color: #D2A8FF; -webkit-text-fill-color: #D2A8FF; caret-color: #D2A8FF; width: 180px; }  /* mensagem — roxo */
 .code-sc .demo-in--msg:focus   { border-color: #D2A8FF; }
 
 /* link montado: texto estático na cor anterior (verde), só os valores coloridos */
-.demo-out          { color: #9ECE6A; word-break: break-all; }
-.demo-out .v-name  { color: #79C0FF; }   /* nome     (dinâmico) */
-.demo-out .v-phone { color: #FFD479; }   /* telefone (dinâmico) */
-.demo-out .v-msg   { color: #D2A8FF; }   /* mensagem (dinâmico) */
+.demo-out          { color: #B5E08A; word-break: break-all; }
+.demo-out .v-name  { color: #9FD2FF; }   /* nome     (dinâmico) — azul claro */
+.demo-out .v-phone { color: #FFD479; }   /* telefone (dinâmico) — âmbar */
+.demo-out .v-msg   { color: #D2A8FF; }   /* mensagem (dinâmico) — roxo */
 
 .glitch-sample { color: #C9CEDA; }
 
@@ -2301,17 +2315,33 @@ scrollbar-color:`],
     const phrases = errMode ? MQ_ERROR : MQ_NORMAL;
     const sep = '<span class="mq-sep">·</span>';
     const half = phrases.map(p => `<span>${p}</span>${sep}`).join('');
-    /* duplicar para loop seamless */
-    mqTrack.innerHTML = half + half;
+    /* duas metades idênticas em wrappers .mq-half → cada uma = 50%
+       exato da track → translateX(-50%) faz loop perfeitamente seamless
+       em qualquer largura de viewport (mobile e web idênticos) */
+    mqTrack.innerHTML = `<div class="mq-half">${half}</div><div class="mq-half">${half}</div>`;
   }
   setMarquee(false);
 
-  /* hover → 72s via CSS (.mq-bar:hover .mq-track)
-     hold (mousedown / touchstart) → classe .hold → 160s */
-  mqBar.addEventListener('mousedown', () => mqBar.classList.add('hold'));
-  document.addEventListener('mouseup', () => mqBar.classList.remove('hold'));
-  mqBar.addEventListener('touchstart', () => mqBar.classList.add('hold'), { passive: true });
-  mqBar.addEventListener('touchend', () => mqBar.classList.remove('hold'));
+  /* ── ESTADOS UNIFICADOS (mobile + web) ──────────────────────
+     normal → slow (hover desktop / toque mobile) → hold (segurar)
+     desktop: hover já é CSS puro. press/hold via JS p/ ambos.       */
+  let pressTimer = null;
+  function startPress() {
+    mqBar.classList.add('press');
+    /* segurar > 450ms vira "hold" (mais lento ainda) */
+    pressTimer = setTimeout(() => mqBar.classList.add('hold'), 450);
+  }
+  function endPress() {
+    clearTimeout(pressTimer);
+    mqBar.classList.remove('press', 'hold');
+  }
+  /* desktop */
+  mqBar.addEventListener('mousedown', startPress);
+  document.addEventListener('mouseup', endPress);
+  /* mobile — mesmo comportamento */
+  mqBar.addEventListener('touchstart', startPress, { passive: true });
+  mqBar.addEventListener('touchend',  endPress);
+  mqBar.addEventListener('touchcancel', endPress);
 
   /* ── TERMINAL TYPEWRITER ──────────────────────────── */
   const KW = ['mkdir', 'cd', 'echo', 'ollama', 'pull', 'run', 'cat', 'bash'];
