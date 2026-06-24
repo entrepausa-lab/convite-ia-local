@@ -346,14 +346,21 @@ html.err::-webkit-scrollbar-thumb:hover {
 
 /* lead */
 .lead {
-  font-size:   clamp(1.1rem, 2.5vw, 1.45rem);
-  line-height: 1.7;
+  font-size:   clamp(0.95rem, 2vw, 1.25rem);
+  line-height: 1.5;
   color:       var(--soft);
-  max-width:   min(360px, 100%);
+  max-width:   100%;
   transition:  color .5s ease;
-  /* altura auto: os <br> no HTML controlam as quebras */
   overflow:    visible;
   height:      auto;
+  white-space: nowrap;
+}
+.lead del {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.lead i { font-style: italic; }
 }
 
 /* data */
@@ -1626,7 +1633,7 @@ textarea:focus-visible   { border-color: var(--pop); }
           </h1>
 
           <p class="lead">
-            vamos praticar juntos uma saída possível?
+            <del><i>praticando uma solução possível agora</i></del>
           </p>
 
           <p class="meta-date">Bate-papo online · vagas por ordem de interesse</p>
