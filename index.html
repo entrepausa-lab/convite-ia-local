@@ -30,7 +30,9 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Chrome: colore a barra do browser; muda junto com o modo erro via JS -->
+  <meta name="theme-color" content="#FDFCF8" id="themeColor">
   <title>IA local · bate-papo · 24 jun · 19h20</title>
   <!-- autoria: Thi A. Dias · design(entre)pausa · entrepausa.design@gmail.com -->
   <!-- licença: CC BY-SA 4.0 + Copyleft · github.com/entrepausa-lab/convite-ia-local -->
@@ -47,7 +49,14 @@
    RESET
 ───────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  /* Chrome: scrollbars e inputs usam tema claro */
+  color-scheme: light;
+}
+/* overflow-x no html/body causa bug de scroll travado no iOS Safari —
+   o controle fica no .pb */
+body { }
 button { font: inherit; }
 
 /* ─────────────────────────────────────────────────────────────
@@ -67,11 +76,62 @@ button { font: inherit; }
   --serif:  'EB Garamond', Georgia, 'Times New Roman', serif;
   --mono:   'Space Mono', ui-monospace, Menlo, Consolas, monospace;
 
-  font-family: var(--serif);
-  background:  var(--paper);
-  color:       var(--ink);
-  min-height:  100vh;
-  transition:  background .5s ease, color .5s ease;
+  font-family:  var(--serif);
+  background:   var(--paper);
+  color:        var(--ink);
+  /* svh: exclui barra de endereço no iOS — sem espaço em branco na dobra */
+  min-height:   100vh;
+  min-height:   100svh;
+  min-width:    100%;
+  width:        100%;
+  /* overflow-x aqui (não no html/body) evita bug de scroll travado no iOS.
+     clip: não cria BFC (não trava scroll iOS); hidden: fallback iOS <16 */
+  overflow-x:   hidden;
+  overflow-x:   clip;
+  transition:   background .5s ease, color .5s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SCROLLBAR — página principal
+   Editorial e discreta: thumb fino em tom de tinta, com "respiro"
+   de papel ao redor (border + background-clip). Track invisível.
+   Desktop apenas — no mobile o overlay nativo auto-hide assume.
+───────────────────────────────────────────────────────────── */
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(20,19,15,.26) transparent;
+}
+html.err { scrollbar-color: rgba(192,73,47,.42) transparent; }
+
+/* WebKit — Chrome / Safari desktop */
+html::-webkit-scrollbar {
+  width: 12px;
+}
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+html::-webkit-scrollbar-thumb {
+  background:        rgba(20,19,15,.22);
+  border-radius:     8px;
+  /* borda da cor do papel cria 3px de respiro: thumb parece flutuar */
+  border:            3px solid #FDFCF8;
+  background-clip:   padding-box;
+  transition:        background-color .3s ease;
+}
+html::-webkit-scrollbar-thumb:hover {
+  background:        rgba(20,19,15,.40);
+  background-clip:   padding-box;
+}
+/* modo erro: thumb terracota + respiro na cor do papel-argila */
+html.err::-webkit-scrollbar-thumb {
+  background:        rgba(192,73,47,.42);
+  border-color:      #F2E0D8;
+  background-clip:   padding-box;
+}
+html.err::-webkit-scrollbar-thumb:hover {
+  background:        rgba(192,73,47,.62);
+  background-clip:   padding-box;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -172,11 +232,18 @@ button { font: inherit; }
 ───────────────────────────────────────────────────────────── */
 .pb-inner {
   max-width: 800px;
+  width:     100%;
   margin:    0 auto;
   padding:   0 32px 68px;   /* bottom: espaço pra barra fixa do rodapé */
+  /* impede que conteúdo interno vaze além da largura disponível */
+  min-width: 0;
+  overflow:  hidden;
+}
+@media (max-width: 640px) {
+  .pb-inner { padding: 0 18px 80px; }
 }
 @media (max-width: 480px) {
-  .pb-inner { padding: 0 22px 80px; }
+  .pb-inner { padding: 0 16px 80px; }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -186,25 +253,31 @@ button { font: inherit; }
   padding-top:    calc(38px + 80px);
   padding-bottom: 80px;
   overflow:       visible;
+  /* no mobile: padding extra pra deixar espaço pra sombra do card projetar */
+}
+@media (max-width: 640px) {
+  .ato1 { padding-bottom: 120px; }
 }
 
 .hero-grid {
   display:               grid;
-  grid-template-columns: 1fr 340px;
-  gap:                   52px;
+  /* card: mínimo 220px, máximo 320px, nunca > 42% do container */
+  grid-template-columns: 1fr clamp(220px, 42%, 320px);
+  gap:                   clamp(28px, 4%, 52px);
   align-items:           start;
   overflow:              visible;
+  min-width:             0;
+  max-width:             100%;
 }
-@media (max-width: 780px) {
-  .hero-grid {
-    grid-template-columns: 1fr 260px;
-    gap: 32px;
-  }
+/* coluna de texto: min-width:0 impede expansão no grid sem cortar texto */
+.hero-grid > div:first-child {
+  min-width: 0;
 }
-@media (max-width: 620px) {
+@media (max-width: 640px) {
   .hero-grid {
     grid-template-columns: 1fr;
     gap: 48px;
+    overflow: visible;
   }
 }
 
@@ -221,29 +294,66 @@ button { font: inherit; }
 
 /* headline */
 .headline {
-  font-size:     clamp(2.5rem, 5.5vw, 3.6rem);
-  font-weight:   500;
-  line-height:   1.15;
+  /* serif: cresce até 3.6rem em telas largas, encolhe com o viewport */
+  font-size:      clamp(2rem, 5.5vw, 3.6rem);
+  font-weight:    500;
+  line-height:    1.15;
   letter-spacing: -.015em;
-  color:         var(--ink);
-  margin-bottom: 28px;
-  transition:    color .5s ease;
-  text-wrap:     balance;
+  color:          var(--ink);
+  margin-bottom:  28px;
+  transition:     color .5s ease, font-size 0s;
+  /* quebra onde precisar — sem nowrap forçado */
+  word-break:     keep-all; /* não quebra no meio de palavras */
+  overflow-wrap:  break-word;
+  max-width:      100%;
 }
 .headline em { font-style: italic; font-weight: 400; }
-.headline-line { display: inline-block; white-space: nowrap; }
+/* headline-line: sem nowrap — deixa fluir naturalmente */
+.headline-line { display: inline; }
+
+/* ── MODO ERRO: mono é ~30% mais larga → font-size menor ── */
+.pb.error .headline {
+  /* vw-driven: se a coluna encolhe, o texto encolhe junto */
+  font-size:      clamp(1.35rem, 3.5vw, 2.4rem);
+  letter-spacing: 0;
+}
+/* lead no erro: mono é mais largo → menor + tracking negativo p/ caber
+   cada linha do <br> sem wrap natural (evita "juntos" caindo sozinho) */
+.pb.error .lead {
+  height:         auto;
+  overflow:       visible;
+  max-width:      100%;
+  font-size:      clamp(.88rem, 1.9vw, 1.1rem);
+  letter-spacing: -.02em;
+}
+
+/* ── MOBILE (≤640px): layout em coluna, mais espaço pra respirar ── */
+@media (max-width: 640px) {
+  .headline { font-size: clamp(1.7rem, 7vw, 2.4rem); }
+
+  .lead {
+    font-size: clamp(1rem, 3.8vw, 1.15rem);
+    height:    auto;
+    overflow:  visible;
+    max-width: 100%;
+  }
+
+  .kicker    { font-size: 9.5px; }
+  .meta-date { font-size: 9.5px; }
+
+  .pb.error .headline { font-size: clamp(1.1rem, 4.5vw, 1.6rem); }
+}
 
 /* lead */
 .lead {
-  font-size:   clamp(1.25rem, 2.5vw, 1.45rem);
+  font-size:   clamp(1.1rem, 2.5vw, 1.45rem);
   line-height: 1.7;
   color:       var(--soft);
-  max-width:   360px;
+  max-width:   min(360px, 100%);
   transition:  color .5s ease;
-  /* 3 linhas fixas: as quebras <br> no HTML garantem o conteúdo,
-     overflow:hidden evita que modo erro (monospace mais largo) vaze */
-  overflow:    hidden;
-  height:      calc(1.45rem * 1.7 * 3);
+  /* altura auto: os <br> no HTML controlam as quebras */
+  overflow:    visible;
+  height:      auto;
 }
 
 /* data */
@@ -260,28 +370,7 @@ button { font: inherit; }
 }
 
 /* scroll cue */
-.scroll-cue {
-  display:        inline-flex;
-  align-items:    center;
-  gap:            8px;
-  margin-top:     44px;
-  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
-  font-size:      10.5px;
-  color:          var(--pop);
-  letter-spacing: .09em;
-  text-transform: uppercase;
-  text-decoration: none;
-  cursor:         pointer;
-  transition:     color .5s ease;
-}
-.scroll-cue .arr {
-  display:   inline-block;
-  animation: bounce 2.2s ease-in-out infinite;
-}
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(5px); }
-}
+/* scroll-cue removido */
 
 /* ─────────────────────────────────────────────────────────────
    CARD — wrapper de perspectiva + cartão 3D
@@ -291,8 +380,15 @@ button { font: inherit; }
   perspective:   900px;
   animation:     slideUp .8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   width:         100%;
+  max-width:     100%;
   overflow:      visible;
   z-index:       10;
+}
+@media (max-width: 640px) {
+  .card-wrap {
+    overflow:   visible;
+    max-width:  100%;
+  }
 }
 
 @keyframes slideUp {
@@ -313,16 +409,25 @@ button { font: inherit; }
   overflow:          hidden;
   transform-style:   preserve-3d;
   will-change:       transform;
-  transition:        box-shadow .15s ease;
+  touch-action:      pan-y; /* permite scroll vertical; tilt via JS captura movimento relativo */
+  transition:        box-shadow .18s cubic-bezier(0.34, 1.56, 0.64, 1), transform .18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background:        #ffffff;
+  /* sombra base: ~50% da intensidade do hover — card bem ancorado */
   box-shadow:
-    0  2px  8px rgba(0,0,0,.08),
-    0  6px 24px rgba(0,0,0,.09);
+    0  1px   3px rgba(0,0,0,.09),
+    0  4px  10px rgba(0,0,0,.075),
+    0 10px  24px rgba(0,0,0,.06),
+    0  0    0   1px rgba(0,0,0,.02);
   cursor: pointer;
 }
 .card:hover {
+  transform: translateY(-4px);
+  /* hover: sombra intensificada (5x a base) */
   box-shadow:
-    0  6px 18px rgba(0,0,0,.11),
-    0 16px 40px rgba(0,0,0,.10);
+    0  2px   6px rgba(0,0,0,.18),
+    0  8px  20px rgba(0,0,0,.15),
+    0 20px  48px rgba(0,0,0,.12),
+    0  0    0   1px rgba(0,0,0,.04);
 }
 
 /* grain sobre o card */
@@ -332,7 +437,7 @@ button { font: inherit; }
   inset:      0;
   z-index:    10;
   pointer-events: none;
-  opacity:    .15;
+  opacity:    .6;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
   mix-blend-mode: multiply;
 }
@@ -451,14 +556,25 @@ button { font: inherit; }
    ATO 2 — PROGRAMA
 ───────────────────────────────────────────────────────────── */
 .ato2 {
-  padding:      68px 0;
-  border-top:   1px solid rgba(20,19,15,.09);
-  border-width: 1px;
-  transition:   border-color .5s ease;
-  margin-top:   0;
+  padding:    68px 0;
+  margin-top: 0;
+  position:   relative;
 }
-.pb.error .ato2 {
-  border-color: rgba(92,36,26,.12);
+/* divider full-width — rompe o pb-inner via viewport units */
+.ato2::before {
+  content:    '';
+  display:    block;
+  position:   absolute;
+  top:        0;
+  left:       50%;
+  transform:  translateX(-50%);
+  width:      100vw;
+  height:     1px;
+  background: rgba(20,19,15,.09);
+  transition: background .5s ease;
+}
+.pb.error .ato2::before {
+  background: rgba(92,36,26,.12);
 }
 
 .section-label {
@@ -517,7 +633,7 @@ button { font: inherit; }
 .p-icons {
   display:     inline-flex;
   align-items: center;
-  gap:         20px;
+  gap:         32px;
   margin-left: auto;
   flex:        none;
 }
@@ -526,48 +642,90 @@ button { font: inherit; }
 
 /* ── DOCK EFFECT ── */
 .p-icons .ico-wrap {
-  transition: transform .18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform .22s cubic-bezier(0.23, 1, 0.320, 1),
+              opacity .18s ease-out,
+              filter .18s ease-out;
   transform-origin: bottom center;
-  will-change: transform;
+  will-change: transform, opacity;
+  transform: scale(1.02);
+  opacity: 1;
+}
+/* Android/mobile: desativa filter (drop-shadow causa bugs de compositing) */
+@media (hover: none) {
+  .p-icons .ico-wrap {
+    will-change: transform;
+    filter: none !important;
+    transition: transform .22s cubic-bezier(0.23, 1, 0.320, 1),
+                opacity .18s ease-out;
+  }
 }
 
-/* ── TOOLTIP CUSTOM (reação em 0.5s, não depende do SO) ── */
+/* ── ÍCONES — cursor de robô vermelho (affordance de tooltip) ──
+   neutro (boca reta), 22px. Olhos = pontos pretos.
+   Sorri em :active (clique) e em .smile (timer de 4s via JS). ── */
 .p-icons .ico-wrap {
-  position:   relative;
-  display:    inline-flex;
-  align-items: center;
+  position:        relative;
+  display:         inline-flex;
+  align-items:     center;
   justify-content: center;
-  cursor:     default;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 28 28'%3E%3Cline x1='14' y1='3' x2='14' y2='7' stroke='%23E23B2E' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='14' cy='2.6' r='1.7' fill='%23E23B2E'/%3E%3Crect x='6' y='7' width='16' height='13' rx='3.6' fill='%23E23B2E'/%3E%3Crect x='3.4' y='11' width='2.4' height='5' rx='1.2' fill='%23E23B2E'/%3E%3Crect x='22.2' y='11' width='2.4' height='5' rx='1.2' fill='%23E23B2E'/%3E%3Ccircle cx='10.6' cy='12.5' r='1.5' fill='%23121212'/%3E%3Ccircle cx='17.4' cy='12.5' r='1.5' fill='%23121212'/%3E%3Cline x1='11' y1='17.2' x2='17' y2='17.2' stroke='%23121212' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E") 11 11, help;
+  -webkit-tap-highlight-color: transparent; /* sem flash azul no tap Android */
 }
-.p-icons .ico-wrap::after {
-  content:          attr(data-tip);
-  position:         absolute;
-  bottom:           calc(100% + 8px);
-  left:             50%;
-  transform:        translateX(-50%);
-  background:       #1A1814;
-  color:            #FAF8F2;
-  font-family:      'Space Mono', ui-monospace, Menlo, Consolas, monospace;
-  font-size:        9.5px;
-  line-height:      1.4;
-  letter-spacing:   .04em;
-  white-space:      nowrap;
-  padding:          5px 9px;
-  border-radius:    3px;
-  pointer-events:   none;
-  opacity:          0;
-  transition:       opacity .15s ease;
-  transition-delay: 0s;
-  z-index:          200;
+/* robô sorrindo — boca curva (clique ou pulso de 4s) */
+.p-icons .ico-wrap:active,
+.p-icons .ico-wrap.smile {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 28 28'%3E%3Cline x1='14' y1='3' x2='14' y2='7' stroke='%23E23B2E' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='14' cy='2.6' r='1.7' fill='%23E23B2E'/%3E%3Crect x='6' y='7' width='16' height='13' rx='3.6' fill='%23E23B2E'/%3E%3Crect x='3.4' y='11' width='2.4' height='5' rx='1.2' fill='%23E23B2E'/%3E%3Crect x='22.2' y='11' width='2.4' height='5' rx='1.2' fill='%23E23B2E'/%3E%3Ccircle cx='10.6' cy='12.5' r='1.5' fill='%23121212'/%3E%3Ccircle cx='17.4' cy='12.5' r='1.5' fill='%23121212'/%3E%3Cpath d='M10.6 16.4 Q14 19.6 17.4 16.4' stroke='%23121212' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") 11 11, help;
 }
-.p-icons .ico-wrap:hover::after {
-  opacity:          1;
-  transition-delay: .5s;
+
+/* ═══════════════════════════════════════════════════════════
+   TOOLTIP v4 — camada independente (#tip2)
+   Criada via JS, fixed, posicionada com getBoundingClientRect.
+   Mouse = hover · Touch = tap. Legado (#g-tooltip) desativado.
+   ═══════════════════════════════════════════════════════════ */
+#tip2 {
+  position:       fixed;
+  left:           0;
+  top:            0;
+  z-index:        10000;
+  pointer-events: none;        /* container não bloqueia; só o link é clicável */
+  background:     #1A1814;
+  color:          #FAF8F2;
+  font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size:      10px;
+  line-height:    1.5;
+  letter-spacing: .03em;
+  padding:        7px 11px;
+  border-radius:  4px;
+  max-width:      min(260px, calc(100vw - 24px));
+  white-space:    normal;
+  overflow-wrap:  break-word;
+  box-shadow:     0 4px 16px rgba(0,0,0,.20);
+  opacity:        0;
+  transform:      translateY(4px);
+  transition:     opacity .14s ease, transform .14s ease;
 }
-/* modo erro: tooltip escurece junto com o tema */
-.pb.error .p-icons .ico-wrap::after {
-  background: #3A100A;
+#tip2.on {
+  opacity:   1;
+  transform: translateY(0);
 }
+#tip2 a {
+  pointer-events:  auto;       /* link clicável apesar do container none */
+  color:           #FFD479;
+  text-decoration: none;
+  display:         inline-flex;
+  align-items:     center;
+  gap:             3px;
+  border-bottom:   1px solid rgba(255,212,121,.4);
+}
+#tip2 a:hover { border-color: #FFD479; }
+#tip2 a svg {
+  width:       8px;
+  height:      8px;
+  flex-shrink: 0;
+  opacity:     .75;
+}
+#tip2.err           { background: #3A100A; }
+#tip2.err a         { color: #FF9966; border-color: rgba(255,153,102,.4); }
 
 /* emoji que aparece no lugar do ícone no modo erro */
 .p-icons .ico-wrap .ico-emoji {
@@ -578,6 +736,42 @@ button { font: inherit; }
 }
 .pb.error .p-icons .ico-wrap .ico-emoji { display: inline-block; }
 .pb.error .p-icons .ico-wrap svg        { display: none; }
+/* robô vermelho: tinge o emoji para um tom avermelhado glitch */
+.p-icons .ico-wrap .ico-emoji.red {
+  filter: sepia(1) saturate(7) hue-rotate(-18deg) brightness(.95);
+}
+
+/* bandeira do Brasil — centralizada, logo abaixo do ícone Sabiá */
+.p-icons .ico-wrap .ico-flag {
+  position:       absolute;
+  top:            calc(100% + 1px);
+  left:           50%;
+  transform:      translateX(-50%);
+  font-size:      14px;
+  line-height:    1;
+  pointer-events: none;
+}
+.p-icons .ico-wrap .ico-badge {
+  position:       absolute;
+  top:            calc(100% + 1px);
+  left:           50%;
+  transform:      translateX(-50%) scale(0.8);
+  font-size:      10px;
+  line-height:    1.2;
+  pointer-events: none;
+  padding:        2px 6px;
+  background:     transparent;
+  color:          currentColor;
+  border:         1px solid currentColor;
+  border-radius:  3px;
+  font-weight:    600;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  font-family:    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+/* no modo erro o ícone vira emoji-glitch — esconde a bandeira e o badge */
+.pb.error .p-icons .ico-wrap .ico-flag,
+.pb.error .p-icons .ico-wrap .ico-badge { display: none; }
 
 @keyframes emoji-shake {
   0%   { transform: scale(1); }
@@ -634,6 +828,7 @@ button { font: inherit; }
   background:     transparent;
   border:         1.5px solid var(--pop);
   color:          var(--pop);
+  touch-action:   manipulation; /* elimina delay 300ms Android */
   font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
   font-size:      11.5px;
   letter-spacing: .09em;
@@ -669,6 +864,8 @@ button { font: inherit; }
   display:        flex;
   align-items:    center;
   gap:            14px;
+  /* Android: safe area pra barra de navegação inferior */
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
   padding:        10px 32px;
   background:     var(--pop);
   color:          var(--paper);
@@ -694,6 +891,7 @@ button { font: inherit; }
   border-radius:   50%;
   color:           var(--paper);
   cursor:          pointer;
+  touch-action:    manipulation; /* elimina delay 300ms Android */
   transition:      background .15s, transform .1s;
 }
 .foot-play:hover  { background: rgba(255,255,255,.30); }
@@ -749,6 +947,12 @@ button { font: inherit; }
   justify-content: center;
   padding:         20px;
   backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+/* fallback: Android sem suporte a backdrop-filter — fundo mais opaco */
+@supports not (backdrop-filter: blur(1px)) {
+  .code-bg { background: rgba(10,10,14,.92); }
+  .modal-bg { background: rgba(20,19,15,.88); }
 }
 .code-bg.open { display: flex; }
 
@@ -757,11 +961,13 @@ button { font: inherit; }
   width:          100%;
   max-width:      720px;
   height:         82vh;
+  height:         88dvh; /* Q2: dvh mais confiável no Android */
   border-radius:  8px;
   overflow:       hidden;
   display:        flex;
   flex-direction: column;
   box-shadow:     0 24px 70px rgba(0,0,0,.5);
+  -webkit-overflow-scrolling: touch; /* Q2: scroll suave */
 }
 
 .code-bar {
@@ -802,6 +1008,8 @@ button { font: inherit; }
   color:       #C9CEDA;
   white-space: pre-wrap;
   word-break:  break-word;
+  touch-action: pan-y; /* Q2: scroll vertical sem conflito */
+  -webkit-overflow-scrolling: touch;
 }
 .code-sc::-webkit-scrollbar       { width: 9px; }
 .code-sc::-webkit-scrollbar-track { background: #14161C; }
@@ -814,14 +1022,40 @@ button { font: inherit; }
   letter-spacing: .03em;
 }
 .code-sc h4:first-child { margin-top: 0; }
-.code-sc .cmt  { color: #6B7385; }            /* comentário cinza */
-.code-sc .key  { color: #79C0FF; }            /* termo técnico azul */
-.code-sc .str  { color: #9ECE6A; }            /* texto/string verde */
-.code-sc .dia  { color: #8C93A3; }            /* diagrama ascii */
+/* QL1: h4 com acento visual à esquerda — escaneável no mobile */
+.code-sc h4 {
+  border-left:  2px solid #FFD479;
+  padding-left: 8px;
+}
+.code-sc .cmt  { color: #6B7385; opacity: .8; }  /* comentários discretos */
+.code-sc .key  { color: #79C0FF; }                /* termo técnico azul */
+.code-sc .str  { color: #9ECE6A; }                /* texto/string verde */
+.code-sc .dia  { color: #8C93A3; }                /* diagrama ascii */
 .code-sc hr {
   border: none;
   border-top: 1px dashed #2C313C;
   margin: 22px 0;
+}
+
+/* ── QL2: blocos ASCII protegidos com scroll horizontal próprio ── */
+.ascii-block {
+  display:     block;
+  overflow-x:  auto;
+  -webkit-overflow-scrolling: touch;
+  white-space: pre;
+  font-size:   11px;
+  color:       #8C93A3;
+  padding:     8px 0 4px;
+  margin:      4px 0;
+  /* scrollbar fina e visível — indica que é scrollável */
+  scrollbar-width:  thin;
+  scrollbar-color:  #3A4150 transparent;
+}
+.ascii-block::-webkit-scrollbar       { height: 4px; }
+.ascii-block::-webkit-scrollbar-track { background: transparent; }
+.ascii-block::-webkit-scrollbar-thumb { background: #3A4150; border-radius: 2px; }
+@media (max-width: 640px) {
+  .ascii-block { font-size: 9px; }
 }
 
 /* link real no rodapé do modal */
@@ -918,11 +1152,21 @@ button { font: inherit; }
   display:         flex;
   align-items:     center;
   justify-content: space-between;
+  flex-wrap:       nowrap; /* Q2: nunca quebra linha */
+  gap:             8px;
   background:      #1B1E26;
   padding:         5px 8px 5px 11px;
   font-size:       10px;
   color:           #6B7385;
   letter-spacing:  .04em;
+  min-width:       0; /* Q2: permite label truncar */
+}
+.snip-head span {
+  overflow:      hidden;
+  text-overflow: ellipsis;
+  white-space:   nowrap;
+  min-width:     0;
+  flex:          1 1 auto;
 }
 .snip-copy {
   background:    #2C313C;
@@ -933,6 +1177,9 @@ button { font: inherit; }
   padding:       4px 11px;
   border-radius: 4px;
   cursor:        pointer;
+  flex-shrink:   0; /* Q2: botão NUNCA quebra linha */
+  white-space:   nowrap;
+  touch-action:  manipulation;
   transition:    background .15s, color .15s;
 }
 .snip-copy:hover { background: #3A4150; }
@@ -951,6 +1198,35 @@ button { font: inherit; }
 .snip-code::-webkit-scrollbar       { height: 7px; }
 .snip-code::-webkit-scrollbar-track { background: #0F1116; }
 .snip-code::-webkit-scrollbar-thumb { background: #333845; border-radius: 4px; }
+
+/* ── Q1: modal terminal — redução sistêmica pra mobile ── */
+@media (max-width: 640px) {
+  .code-bg  { padding: 8px; } /* menos margem ao redor do modal */
+  .code-win { border-radius: 6px; height: 92dvh; }
+
+  .code-sc {
+    font-size:   10.5px; /* 12.5 → 10.5 */
+    line-height: 1.65;
+    padding:     14px 14px 32px; /* 22px 26px → 14px 14px */
+  }
+  .code-sc h4 {
+    font-size:  11.5px; /* 13.5 → 11.5 */
+    margin:     20px 0 6px;
+  }
+  .code-sc hr { margin: 16px 0; }
+
+  .snip-code {
+    font-size:  10px; /* 11.5 → 10 */
+    padding:    10px 10px;
+    line-height: 1.55;
+  }
+  .snip-head  { font-size: 9px; padding: 4px 6px 4px 9px; }
+  .snip-copy  { font-size: 9px; padding: 3px 8px; }
+
+  .ctrl-seg   { font-size: 10px; padding: 4px 8px; }
+  .ctrl-hint  { font-size: 10px; }
+  .code-bar-title { font-size: 9.5px; }
+}
 
 /* ── INTERAÇÕES DISTINTAS (partes 3, 5, 6) ── */
 
@@ -1019,6 +1295,7 @@ button { font: inherit; }
   justify-content: center;
   padding:         20px;
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 .modal-bg.open { display: flex; }
 
@@ -1030,8 +1307,11 @@ button { font: inherit; }
   position:    relative;
   border-radius: 2px;
   transition:  background .5s ease;
+  /* Android: dvh é mais confiável que vh (exclui barra de endereço) */
   max-height:  90vh;
+  max-height:  90dvh;
   overflow-y:  auto;
+  -webkit-overflow-scrolling: touch; /* scroll suave no Android */
 }
 @media (max-width: 640px) {
   .modal {
@@ -1081,13 +1361,40 @@ button { font: inherit; }
   transition:    color .5s ease;
 }
 
-.field { margin-bottom: 24px; }
+.field { margin-bottom: 24px; position: relative; }
+
+/* ── check verde lúdico ──────────────────────────────────────── */
+.field-check {
+  position:   absolute;
+  top:        0;
+  right:      0;
+  width:      18px;
+  height:     18px;
+  opacity:    0;
+  pointer-events: none;
+  transform:  scale(.5);
+  transition: opacity .25s, transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.field-check svg { width: 100%; height: 100%; display: block; }
+.field--done .field-check {
+  opacity:   1;
+  transform: scale(1);
+}
+
+@keyframes check-draw {
+  from { stroke-dashoffset: 20; }
+  to   { stroke-dashoffset: 0;  }
+}
+.field--done .field-check path {
+  animation: check-draw .3s ease forwards;
+}
 
 .field > label,
 .field > p.field-label {
   display:        block;
   font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
-  font-size:      9.5px;
+  font-size:      12.5px;
+  font-weight:    700;
   letter-spacing: .12em;
   text-transform: uppercase;
   color:          var(--soft);
@@ -1096,18 +1403,28 @@ button { font: inherit; }
 }
 
 input[type="text"] {
-  width:       100%;
-  border:      none;
+  width:         100%;
+  border:        none;
   border-bottom: 1px solid var(--mute);
-  background:  transparent;
-  color:       var(--ink);
-  font-family: var(--serif);
-  font-size:   1.1rem;
-  padding:     8px 0;
-  outline:     none;
-  transition:  border-color .2s, color .5s ease;
+  background:    transparent;
+  color:         var(--ink);
+  font-family:   var(--serif);
+  font-size:     1.1rem;
+  padding:       8px 0;
+  outline:       none;
+  transition:    border-color .2s, color .5s ease;
+  /* Chrome: neutraliza fundo azul/amarelo do autofill */
+  -webkit-text-fill-color: var(--ink);
 }
 input[type="text"]:focus { border-color: var(--pop); }
+/* Chrome autofill: mantém fundo transparente */
+input[type="text"]:-webkit-autofill,
+input[type="text"]:-webkit-autofill:hover,
+input[type="text"]:-webkit-autofill:focus {
+  -webkit-box-shadow:      0 0 0 100px var(--paper) inset;
+  -webkit-text-fill-color: var(--ink);
+  transition:              background-color 5000s ease-in-out 0s;
+}
 
 .field-opt {
   font-size:      8px;
@@ -1117,21 +1434,24 @@ input[type="text"]:focus { border-color: var(--pop); }
 }
 
 textarea {
-  width:        100%;
-  border:       none;
-  border-bottom: 1px solid var(--mute);
-  background:   transparent;
-  color:        var(--ink);
-  font-family:  var(--serif);
-  font-size:    1.05rem;
-  line-height:  1.6;
-  padding:      8px 0;
-  outline:      none;
-  resize:       none;
-  transition:   border-color .2s, color .5s ease;
+  width:                   100%;
+  border:                  none;
+  border-bottom:           1px solid var(--mute);
+  background:              transparent;
+  color:                   var(--ink);
+  -webkit-text-fill-color: var(--ink);
+  font-family:             var(--serif);
+  font-size:               1.05rem;
+  line-height:             1.6;
+  padding:                 8px 0;
+  outline:                 none;
+  resize:                  none;
+  transition:              border-color .2s, color .5s ease;
 }
-textarea:focus       { border-color: var(--pop); }
+textarea:focus        { border-color: var(--pop); }
 textarea::placeholder { color: var(--mute); opacity: 1; }
+
+.ph-muted::placeholder { color: var(--soft); opacity: .28; font-size: .8em; }
 
 .radio-group  { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
 .radio-opt    {
@@ -1168,12 +1488,23 @@ textarea::placeholder { color: var(--mute); opacity: 1; }
   margin-top:     8px;
   transition:     opacity .2s, background .5s ease, color .5s ease;
 }
-.btn-send:hover { opacity: .84; }
+.btn-send:hover          { opacity: .84; }
+.btn-send:focus-visible  { outline: 2px solid var(--pop); outline-offset: 3px; }
+.modal-close:focus-visible,
+.radio-opt input:focus-visible { outline: 2px solid var(--pop); outline-offset: 2px; }
+input[type="text"]:focus-visible,
+textarea:focus-visible   { border-color: var(--pop); }
 
 /* botão secundário — exportar HTML p/ rodar offline */
+.export-row {
+  display:        flex;
+  align-items:    center;
+  gap:            10px;
+  margin-top:     4px;
+}
 .btn-export {
   display:        block;
-  width:          100%;
+  flex:           1;
   background:     none;
   border:         none;
   color:          var(--soft);
@@ -1181,12 +1512,74 @@ textarea::placeholder { color: var(--mute); opacity: 1; }
   font-size:      10.5px;
   letter-spacing: .05em;
   padding:        13px 8px 4px;
-  margin-top:     4px;
   cursor:         pointer;
   text-align:     center;
   transition:     color .2s, opacity .5s ease;
 }
 .btn-export:hover { color: var(--pop); }
+
+/* toggle anotado */
+.export-toggle {
+  display:        flex;
+  align-items:    center;
+  gap:            5px;
+  cursor:         pointer;
+  padding-top:    10px;
+  flex-shrink:    0;
+}
+.export-toggle input { display: none; }
+.toggle-track {
+  width:          28px;
+  height:         15px;
+  border-radius:  8px;
+  border:         1px solid var(--soft);
+  position:       relative;
+  transition:     border-color .2s, background .2s;
+  flex-shrink:    0;
+}
+.toggle-thumb {
+  position:       absolute;
+  top:            2px;
+  left:           2px;
+  width:          9px;
+  height:         9px;
+  border-radius:  50%;
+  background:     var(--soft);
+  transition:     transform .2s, background .2s;
+}
+.export-toggle input:checked ~ .toggle-track { border-color: var(--pop); }
+.export-toggle input:checked ~ .toggle-track .toggle-thumb {
+  transform:  translateX(13px);
+  background: var(--pop);
+}
+.toggle-label {
+  font-family:    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size:      10px;
+  color:          var(--soft);
+  letter-spacing: .03em;
+  transition:     color .2s;
+  white-space:    nowrap;
+}
+.export-toggle input:checked ~ .toggle-label { color: var(--pop); }
+
+/* toggle de interesse (no form) — label mais longo, alinha no topo */
+.field--toggle { padding: 4px 0 2px; }
+.interest-toggle {
+  align-items:  flex-start;
+  gap:          10px;
+  padding-top:  0;
+}
+.interest-toggle .toggle-track { margin-top: 2px; flex-shrink: 0; }
+.toggle-label--text {
+  font-family:  inherit;
+  font-size:    13px;
+  line-height:  1.45;
+  letter-spacing: 0;
+  font-weight:  400;
+  color:        var(--text);
+  transition:   color .2s;
+}
+.interest-toggle input:checked ~ .toggle-label--text { color: var(--pop); }
 
 .modal-note {
   font-family:    'Space Mono', ui-monospace, Menlo, Consolas, monospace;
@@ -1221,21 +1614,17 @@ textarea::placeholder { color: var(--mute); opacity: 1; }
 
         <!-- coluna esquerda -->
         <div>
-          <p class="kicker">24 jun · terça · 19h20 – 20h · online</p>
+          <p class="kicker">24 jun (?) · 19h20 – 20h · online</p>
 
           <h1 class="headline">
             <span class="headline-line">O que roda debaixo</span><br><span class="headline-line">do capô do <em>gpt</em>?</span>
           </h1>
 
           <p class="lead">
-            Sem tempo pra filosofar,<br>mas podemos praticar juntos<br>uma saída possível.
+            <em>Feitiçaria, artefato, <span style="white-space:nowrap">caixa-preta…</span></em><br>podemos abrir esse capô juntos<br>e praticar uma saída possível.
           </p>
 
-          <p class="meta-date">Bate-papo online · 0800 · vagas por ordem de interesse</p>
-
-          <a class="scroll-cue" id="scrollCue" href="#programa">
-            role <span class="arr">↓</span>
-          </a>
+          <p class="meta-date">Bate-papo online · vagas por ordem de interesse</p>
         </div>
 
         <!-- coluna direita — card terminal -->
@@ -1269,9 +1658,6 @@ textarea::placeholder { color: var(--mute); opacity: 1; }
                 <br>
                 <p>Coletando informações sobre o problema (100% concluído).</p>
                 <br>
-                <p>Se precisar de suporte entre em contato com:</p>
-                <p><strong>0800-IA-LOCAL</strong></p>
-                <br>
                 <p>— — —</p>
                 <br>
                 <p>A boa notícia: isso tem solução.</p>
@@ -1299,7 +1685,7 @@ textarea::placeholder { color: var(--mute); opacity: 1; }
         <div class="p-row">
           <div class="fig">01</div>
           <div>
-            <p class="p-title"><span class="t">Contexto sem filosofia</span><span class="p-icons"><span class="ico-wrap" data-tip="ChatGPT · mora na nuvem e cobra pela visita"><svg class="mono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/></svg><span class="ico-emoji" id="eGpt"></span></span><span class="ico-wrap" data-tip="Claude · esse aqui ajudou a montar este convite"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#D97757" d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/></svg><span class="ico-emoji" id="eClaude"></span></span><span class="ico-wrap" data-tip="Qwen · open-weight: baixa e roda offline"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="url(#qwg)" d="M12.604 1.34c.393.69.784 1.382 1.174 2.075a.18.18 0 00.157.091h5.552c.174 0 .322.11.446.327l1.454 2.57c.19.337.24.478.024.837-.26.43-.513.864-.76 1.3l-.367.658c-.106.196-.223.28-.04.512l2.652 4.637c.172.301.111.494-.043.77-.437.785-.882 1.564-1.335 2.34-.159.272-.352.375-.68.37-.777-.016-1.552-.01-2.327.016a.099.099 0 00-.081.05 575.097 575.097 0 01-2.705 4.74c-.169.293-.38.363-.725.364-.997.003-2.002.004-3.017.002a.537.537 0 01-.465-.271l-1.335-2.323a.09.09 0 00-.083-.049H4.982c-.285.03-.553-.001-.805-.092l-1.603-2.77a.543.543 0 01-.002-.54l1.207-2.12a.198.198 0 000-.197 550.951 550.951 0 01-1.875-3.272l-.79-1.395c-.16-.31-.173-.496.095-.965.465-.813.927-1.625 1.387-2.436.132-.234.304-.334.584-.335a338.3 338.3 0 012.589-.001.124.124 0 00.107-.063l2.806-4.895a.488.488 0 01.422-.246c.524-.001 1.053 0 1.583-.006L11.704 1c.341-.003.724.032.9.34zm-3.432.403a.06.06 0 00-.052.03L6.254 6.788a.157.157 0 01-.135.078H3.253c-.056 0-.07.025-.041.074l5.81 10.156c.025.042.013.062-.034.063l-2.795.015a.218.218 0 00-.2.116l-1.32 2.31c-.044.078-.021.118.068.118l5.716.008c.046 0 .08.02.104.061l1.403 2.454c.046.081.092.082.139 0l5.006-8.76.783-1.382a.055.055 0 01.096 0l1.424 2.53a.122.122 0 00.107.062l2.763-.02a.04.04 0 00.035-.02.041.041 0 000-.04l-2.9-5.086a.108.108 0 010-.113l.293-.507 1.12-1.977c.024-.041.012-.062-.035-.062H9.2c-.059 0-.073-.026-.043-.077l1.434-2.505a.107.107 0 000-.114L9.225 1.774a.06.06 0 00-.053-.031zm6.29 8.02c.046 0 .058.02.034.06l-.832 1.465-2.613 4.585a.056.056 0 01-.05.029.058.058 0 01-.05-.029L8.498 9.841c-.02-.034-.01-.052.028-.054l.216-.012 6.722-.012z"/><defs><linearGradient id="qwg" x1="0%" x2="100%" y1="0%" y2="0%"><stop offset="0%" stop-color="#6336E7" stop-opacity=".84"/><stop offset="100%" stop-color="#6F69F7" stop-opacity=".84"/></linearGradient></defs></svg><span class="ico-emoji" id="eQwen"></span></span><span class="ico-wrap" data-tip="Ollama · a lhama que traz os modelos pra sua máquina"><svg class="mono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M7.905 1.09c.216.085.411.225.588.41.295.306.544.744.734 1.263.191.522.315 1.1.362 1.68a5.054 5.054 0 012.049-.636l.051-.004c.87-.07 1.73.087 2.48.474.101.053.2.11.297.17.05-.569.172-1.134.36-1.644.19-.52.439-.957.733-1.264a1.67 1.67 0 01.589-.41c.257-.1.53-.118.796-.042.401.114.745.368 1.016.737.248.337.434.769.561 1.287.23.934.27 2.163.115 3.645l.053.04.026.019c.757.576 1.284 1.397 1.563 2.35.435 1.487.216 3.155-.534 4.088l-.018.021.002.003c.417.762.67 1.567.724 2.4l.002.03c.064 1.065-.2 2.137-.814 3.19l-.007.01.01.024c.472 1.157.62 2.322.438 3.486l-.006.039a.651.651 0 01-.747.536.648.648 0 01-.54-.742c.167-1.033.01-2.069-.48-3.123a.643.643 0 01.04-.617l.004-.006c.604-.924.854-1.83.8-2.72-.046-.779-.325-1.544-.8-2.273a.644.644 0 01.18-.886l.009-.006c.243-.159.467-.565.58-1.12a4.229 4.229 0 00-.095-1.974c-.205-.7-.58-1.284-1.105-1.683-.595-.454-1.383-.673-2.38-.61a.653.653 0 01-.632-.371c-.314-.665-.772-1.141-1.343-1.436a3.288 3.288 0 00-1.772-.332c-1.245.099-2.343.801-2.67 1.686a.652.652 0 01-.61.425c-1.067.002-1.893.252-2.497.703-.522.39-.878.935-1.066 1.588a4.07 4.07 0 00-.068 1.886c.112.558.331 1.02.582 1.269l.008.007c.212.207.257.53.109.785-.36.622-.629 1.549-.673 2.44-.05 1.018.186 1.902.719 2.536l.016.019a.643.643 0 01.095.69c-.576 1.236-.753 2.252-.562 3.052a.652.652 0 01-1.269.298c-.243-1.018-.078-2.184.473-3.498l.014-.035-.008-.012a4.339 4.339 0 01-.598-1.309l-.005-.019a5.764 5.764 0 01-.177-1.785c.044-.91.278-1.842.622-2.59l.012-.026-.002-.002c-.293-.418-.51-.953-.63-1.545l-.005-.024a5.352 5.352 0 01.093-2.49c.262-.915.777-1.701 1.536-2.269.06-.045.123-.09.186-.132-.159-1.493-.119-2.73.112-3.67.127-.518.314-.95.562-1.287.27-.368.614-.622 1.015-.737.266-.076.54-.059.797.042zm4.116 9.09c.936 0 1.8.313 2.446.855.63.527 1.005 1.235 1.005 1.94 0 .888-.406 1.58-1.133 2.022-.62.375-1.451.557-2.403.557-1.009 0-1.871-.259-2.493-.734-.617-.47-.963-1.13-.963-1.845 0-.707.398-1.417 1.056-1.946.668-.537 1.55-.849 2.485-.849zm0 .896a3.07 3.07 0 00-1.916.65c-.461.37-.722.835-.722 1.25 0 .428.21.829.61 1.134.455.347 1.124.548 1.943.548.799 0 1.473-.147 1.932-.426.463-.28.7-.686.7-1.257 0-.423-.246-.89-.683-1.256-.484-.405-1.14-.643-1.864-.643zm.662 1.21l.004.004c.12.151.095.37-.056.49l-.292.23v.446a.375.375 0 01-.376.373.375.375 0 01-.376-.373v-.46l-.271-.218a.347.347 0 01-.052-.49.353.353 0 01.494-.051l.215.172.22-.174a.353.353 0 01.49.051zm-5.04-1.919c.478 0 .867.39.867.871a.87.87 0 01-.868.871.87.87 0 01-.867-.87.87.87 0 01.867-.872zm8.706 0c.48 0 .868.39.868.871a.87.87 0 01-.868.871.87.87 0 01-.867-.87.87.87 0 01.867-.872zM7.44 2.3l-.003.002a.659.659 0 00-.285.238l-.005.006c-.138.189-.258.467-.348.832-.17.692-.216 1.631-.124 2.782.43-.128.899-.208 1.404-.237l.01-.001.019-.034c.046-.082.095-.161.148-.239.123-.771.022-1.692-.253-2.444-.134-.364-.297-.65-.453-.813a.628.628 0 00-.107-.09L7.44 2.3zm9.174.04l-.002.001a.628.628 0 00-.107.09c-.156.163-.32.45-.453.814-.29.794-.387 1.776-.23 2.572l.058.097.008.014h.03a5.184 5.184 0 011.466.212c.086-1.124.038-2.043-.128-2.722-.09-.365-.21-.643-.349-.832l-.004-.006a.659.659 0 00-.285-.239h-.004z"/></svg><span class="ico-emoji" id="eOllama"></span></span></span></p>
+            <p class="p-title"><span class="t">Contexto sem filosofia</span><span class="p-icons"><span class="ico-wrap" data-tip="ChatGPT · mora na nuvem e cobra pela visita" data-tip-id="chatgpt"><svg class="mono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/></svg><span class="ico-emoji" id="eGpt"></span></span><span class="ico-wrap" data-tip="Claude · esse aqui ajudou a montar este convite" data-tip-id="claude"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#D97757" d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/></svg><span class="ico-emoji" id="eClaude"></span></span><span class="ico-wrap" data-tip="Qwen · open-weight: baixa e roda offline" data-tip-id="qwen"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="url(#qwg)" d="M12.604 1.34c.393.69.784 1.382 1.174 2.075a.18.18 0 00.157.091h5.552c.174 0 .322.11.446.327l1.454 2.57c.19.337.24.478.024.837-.26.43-.513.864-.76 1.3l-.367.658c-.106.196-.223.28-.04.512l2.652 4.637c.172.301.111.494-.043.77-.437.785-.882 1.564-1.335 2.34-.159.272-.352.375-.68.37-.777-.016-1.552-.01-2.327.016a.099.099 0 00-.081.05 575.097 575.097 0 01-2.705 4.74c-.169.293-.38.363-.725.364-.997.003-2.002.004-3.017.002a.537.537 0 01-.465-.271l-1.335-2.323a.09.09 0 00-.083-.049H4.982c-.285.03-.553-.001-.805-.092l-1.603-2.77a.543.543 0 01-.002-.54l1.207-2.12a.198.198 0 000-.197 550.951 550.951 0 01-1.875-3.272l-.79-1.395c-.16-.31-.173-.496.095-.965.465-.813.927-1.625 1.387-2.436.132-.234.304-.334.584-.335a338.3 338.3 0 012.589-.001.124.124 0 00.107-.063l2.806-4.895a.488.488 0 01.422-.246c.524-.001 1.053 0 1.583-.006L11.704 1c.341-.003.724.032.9.34zm-3.432.403a.06.06 0 00-.052.03L6.254 6.788a.157.157 0 01-.135.078H3.253c-.056 0-.07.025-.041.074l5.81 10.156c.025.042.013.062-.034.063l-2.795.015a.218.218 0 00-.2.116l-1.32 2.31c-.044.078-.021.118.068.118l5.716.008c.046 0 .08.02.104.061l1.403 2.454c.046.081.092.082.139 0l5.006-8.76.783-1.382a.055.055 0 01.096 0l1.424 2.53a.122.122 0 00.107.062l2.763-.02a.04.04 0 00.035-.02.041.041 0 000-.04l-2.9-5.086a.108.108 0 010-.113l.293-.507 1.12-1.977c.024-.041.012-.062-.035-.062H9.2c-.059 0-.073-.026-.043-.077l1.434-2.505a.107.107 0 000-.114L9.225 1.774a.06.06 0 00-.053-.031zm6.29 8.02c.046 0 .058.02.034.06l-.832 1.465-2.613 4.585a.056.056 0 01-.05.029.058.058 0 01-.05-.029L8.498 9.841c-.02-.034-.01-.052.028-.054l.216-.012 6.722-.012z"/><defs><linearGradient id="qwg" x1="0%" x2="100%" y1="0%" y2="0%"><stop offset="0%" stop-color="#6336E7" stop-opacity=".84"/><stop offset="100%" stop-color="#6F69F7" stop-opacity=".84"/></linearGradient></defs></svg><span class="ico-emoji" id="eQwen"></span><span class="ico-flag" aria-hidden="true">🇨🇳</span></span><span class="ico-wrap" data-tip="Maritaca · IA brasileira; o Sabiá-7B é aberto" data-tip-id="maritaca"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="13.5" cy="12" r="7" fill="#1FA15B"/><path fill="#F0A93B" d="M6.5 9.8c-1.7 0-3.2.9-4 2.3-.3.5.1 1.1.7 1l3.6-.5c.3-.8.8-1.5 1.5-2-.5-.5-1.1-.8-1.8-.8z"/><circle cx="10.8" cy="10" r="1.7" fill="#fff"/><circle cx="10.8" cy="10" r=".85" fill="#0E2E1C"/><path stroke="#1FA15B" stroke-width="1.7" stroke-linecap="round" d="M12.5 5 11.8 2.6M15 5.2 15.4 2.8M10 5.8 9 3.6"/></svg><span class="ico-emoji" id="eMaritaca"></span><span class="ico-flag" aria-hidden="true">🇧🇷</span></span><span class="ico-wrap" data-tip="Ollama · a lhama que traz os modelos pra sua máquina" data-tip-id="ollama"><svg class="mono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M7.905 1.09c.216.085.411.225.588.41.295.306.544.744.734 1.263.191.522.315 1.1.362 1.68a5.054 5.054 0 012.049-.636l.051-.004c.87-.07 1.73.087 2.48.474.101.053.2.11.297.17.05-.569.172-1.134.36-1.644.19-.52.439-.957.733-1.264a1.67 1.67 0 01.589-.41c.257-.1.53-.118.796-.042.401.114.745.368 1.016.737.248.337.434.769.561 1.287.23.934.27 2.163.115 3.645l.053.04.026.019c.757.576 1.284 1.397 1.563 2.35.435 1.487.216 3.155-.534 4.088l-.018.021.002.003c.417.762.67 1.567.724 2.4l.002.03c.064 1.065-.2 2.137-.814 3.19l-.007.01.01.024c.472 1.157.62 2.322.438 3.486l-.006.039a.651.651 0 01-.747.536.648.648 0 01-.54-.742c.167-1.033.01-2.069-.48-3.123a.643.643 0 01.04-.617l.004-.006c.604-.924.854-1.83.8-2.72-.046-.779-.325-1.544-.8-2.273a.644.644 0 01.18-.886l.009-.006c.243-.159.467-.565.58-1.12a4.229 4.229 0 00-.095-1.974c-.205-.7-.58-1.284-1.105-1.683-.595-.454-1.383-.673-2.38-.61a.653.653 0 01-.632-.371c-.314-.665-.772-1.141-1.343-1.436a3.288 3.288 0 00-1.772-.332c-1.245.099-2.343.801-2.67 1.686a.652.652 0 01-.61.425c-1.067.002-1.893.252-2.497.703-.522.39-.878.935-1.066 1.588a4.07 4.07 0 00-.068 1.886c.112.558.331 1.02.582 1.269l.008.007c.212.207.257.53.109.785-.36.622-.629 1.549-.673 2.44-.05 1.018.186 1.902.719 2.536l.016.019a.643.643 0 01.095.69c-.576 1.236-.753 2.252-.562 3.052a.652.652 0 01-1.269.298c-.243-1.018-.078-2.184.473-3.498l.014-.035-.008-.012a4.339 4.339 0 01-.598-1.309l-.005-.019a5.764 5.764 0 01-.177-1.785c.044-.91.278-1.842.622-2.59l.012-.026-.002-.002c-.293-.418-.51-.953-.63-1.545l-.005-.024a5.352 5.352 0 01.093-2.49c.262-.915.777-1.701 1.536-2.269.06-.045.123-.09.186-.132-.159-1.493-.119-2.73.112-3.67.127-.518.314-.95.562-1.287.27-.368.614-.622 1.015-.737.266-.076.54-.059.797.042zm4.116 9.09c.936 0 1.8.313 2.446.855.63.527 1.005 1.235 1.005 1.94 0 .888-.406 1.58-1.133 2.022-.62.375-1.451.557-2.403.557-1.009 0-1.871-.259-2.493-.734-.617-.47-.963-1.13-.963-1.845 0-.707.398-1.417 1.056-1.946.668-.537 1.55-.849 2.485-.849zm0 .896a3.07 3.07 0 00-1.916.65c-.461.37-.722.835-.722 1.25 0 .428.21.829.61 1.134.455.347 1.124.548 1.943.548.799 0 1.473-.147 1.932-.426.463-.28.7-.686.7-1.257 0-.423-.246-.89-.683-1.256-.484-.405-1.14-.643-1.864-.643zm.662 1.21l.004.004c.12.151.095.37-.056.49l-.292.23v.446a.375.375 0 01-.376.373.375.375 0 01-.376-.373v-.46l-.271-.218a.347.347 0 01-.052-.49.353.353 0 01.494-.051l.215.172.22-.174a.353.353 0 01.49.051zm-5.04-1.919c.478 0 .867.39.867.871a.87.87 0 01-.868.871.87.87 0 01-.867-.87.87.87 0 01.867-.872zm8.706 0c.48 0 .868.39.868.871a.87.87 0 01-.868.871.87.87 0 01-.867-.87.87.87 0 01.867-.872zM7.44 2.3l-.003.002a.659.659 0 00-.285.238l-.005.006c-.138.189-.258.467-.348.832-.17.692-.216 1.631-.124 2.782.43-.128.899-.208 1.404-.237l.01-.001.019-.034c.046-.082.095-.161.148-.239.123-.771.022-1.692-.253-2.444-.134-.364-.297-.65-.453-.813a.628.628 0 00-.107-.09L7.44 2.3zm9.174.04l-.002.001a.628.628 0 00-.107.09c-.156.163-.32.45-.453.814-.29.794-.387 1.776-.23 2.572l.058.097.008.014h.03a5.184 5.184 0 011.466.212c.086-1.124.038-2.043-.128-2.722-.09-.365-.21-.643-.349-.832l-.004-.006a.659.659 0 00-.285-.239h-.004z"/></svg><span class="ico-emoji" id="eOllama"></span><span class="ico-badge">local</span></span></span></p>
             <p class="p-body">
               O que é um modelo de linguagem, como funciona por baixo,
               e por que alguém quereria rodar isso na própria máquina.
@@ -1368,16 +1754,19 @@ textarea::placeholder { color: var(--mute); opacity: 1; }
         <div class="field">
           <label for="f-nome">Nome / apelido</label>
           <input type="text" id="f-nome" autocomplete="name">
+          <span class="field-check" aria-hidden="true"><svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.25" stroke="#4CAF7D" stroke-width="1.5"/><path d="M5 9l3 3 5-5" stroke="#4CAF7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="20" stroke-dashoffset="20"/></svg></span>
         </div>
 
         <div class="field">
           <label for="f-contact">E-mail ou WhatsApp</label>
-          <input type="text" id="f-contact" placeholder="seu@email.com ou 21 9xxxx-xxxx" autocomplete="email">
+          <input type="text" id="f-contact" autocomplete="email">
+          <span class="field-check" aria-hidden="true"><svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.25" stroke="#4CAF7D" stroke-width="1.5"/><path d="M5 9l3 3 5-5" stroke="#4CAF7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="20" stroke-dashoffset="20"/></svg></span>
         </div>
 
         <div class="field">
           <label for="f-machine">Máquina / sistema / Mem. RAM</label>
-          <input type="text" id="f-machine" placeholder="ex: MacBook M1 16 GB, Windows 11, Ubuntu…">
+          <input type="text" id="f-machine" placeholder="ex: MacBook M1 16 GB, Windows 11, Ubuntu…" class="ph-muted">
+          <span class="field-check" aria-hidden="true"><svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.25" stroke="#4CAF7D" stroke-width="1.5"/><path d="M5 9l3 3 5-5" stroke="#4CAF7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="20" stroke-dashoffset="20"/></svg></span>
         </div>
 
         <div class="field">
@@ -1393,6 +1782,7 @@ textarea::placeholder { color: var(--mute); opacity: 1; }
               <input type="radio" name="terminal" value="sim, uso com frequência"> Sim, uso com frequência
             </label>
           </div>
+          <span class="field-check" aria-hidden="true"><svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.25" stroke="#4CAF7D" stroke-width="1.5"/><path d="M5 9l3 3 5-5" stroke="#4CAF7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="20" stroke-dashoffset="20"/></svg></span>
         </div>
 
         <div class="field">
@@ -1408,6 +1798,7 @@ textarea::placeholder { color: var(--mute); opacity: 1; }
               <input type="radio" name="llm" value="sim"> Sim
             </label>
           </div>
+          <span class="field-check" aria-hidden="true"><svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.25" stroke="#4CAF7D" stroke-width="1.5"/><path d="M5 9l3 3 5-5" stroke="#4CAF7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="20" stroke-dashoffset="20"/></svg></span>
         </div>
 
         <div class="field">
@@ -1429,15 +1820,24 @@ textarea::placeholder { color: var(--mute); opacity: 1; }
               <input type="checkbox" name="dias" value="sex"> Sex
             </label>
           </div>
+          <span class="field-check" aria-hidden="true"><svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.25" stroke="#4CAF7D" stroke-width="1.5"/><path d="M5 9l3 3 5-5" stroke="#4CAF7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="20" stroke-dashoffset="20"/></svg></span>
         </div>
 
         <div class="field">
           <label for="f-obs">Comentário sobre o site <span class="field-opt">(opcional)</span></label>
-          <textarea id="f-obs" rows="3" placeholder="o que achou, o que faltou, bug encontrado…"></textarea>
+          <textarea id="f-obs" rows="3" placeholder="o que achou, o que faltou, bug encontrado…" class="ph-muted"></textarea>
+          <span class="field-check" aria-hidden="true"><svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.25" stroke="#4CAF7D" stroke-width="1.5"/><path d="M5 9l3 3 5-5" stroke="#4CAF7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="20" stroke-dashoffset="20"/></svg></span>
         </div>
 
         <button type="submit" class="btn-send">Enviar interesse →</button>
-        <button type="button" class="btn-export" id="btnExport">⤓ baixar este convite (.html) pra rodar offline</button>
+        <div class="export-row" style="display:none">
+          <button type="button" class="btn-export" id="btnExport">⤓ baixar este convite (.html)</button>
+          <label class="export-toggle" title="versão com comentários explicando o código — boa pra abrir no editor">
+            <input type="checkbox" id="cbExportComments" />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label">anotado</span>
+          </label>
+        </div>
         <p class="modal-note">
           Isso abre o WhatsApp com a mensagem já escrita. Nenhum dado passa por terceiros.
         </p>
@@ -1461,11 +1861,11 @@ textarea::placeholder { color: var(--mute); opacity: 1; }
 <span class="cmt"># Esta página é UM arquivo só: index.html
 # Dentro dele moram três linguagens, cada uma com um papel:</span>
 
-   <span class="dia">┌─────────────┬──────────────────────────────────────┐
-   │ HTML        │ o esqueleto — o QUE aparece          │
-   │ CSS         │ a roupa  — COMO aparece (cor, fonte) │
-   │ JavaScript  │ o músculo — o que ACONTECE ao clicar │
-   └─────────────┴──────────────────────────────────────┘</span>
+   <span class="ascii-block">┌─────────────┬──────────────────────────────────────┐
+│ HTML        │ o esqueleto — o QUE aparece          │
+│ CSS         │ a roupa  — COMO aparece (cor, fonte) │
+│ JavaScript  │ o músculo — o que ACONTECE ao clicar │
+└─────────────┴──────────────────────────────────────┘</span>
 
 <span class="cmt"># Não tem servidor, não tem banco de dados, não tem nuvem.
 # Abriu o arquivo no navegador? Já está rodando. 100% local.</span>
@@ -1527,7 +1927,7 @@ desenhar_ruido() <span class="str">→ por cima da página, opacidade variável<
 <span class="cmt"># Aquele quadradinho branco com comandos aparecendo
 # letra por letra é uma animação em loop infinito.</span>
 
-<span class="dia">repetir para sempre:
+<span class="ascii-block">repetir para sempre:
    pega a próxima cena (ex: "ollama pull llama3")
    para cada letra da linha:
         mostra a letra
@@ -1552,7 +1952,7 @@ desenhar_ruido() <span class="str">→ por cima da página, opacidade variável<
 <span class="cmt"># Quando o mouse passa por cima, o cartão se inclina
 # seguindo o cursor, como se fosse um objeto físico.</span>
 
-<span class="dia">mouse mexeu → calcula distância do centro
+<span class="ascii-block">mouse mexeu → calcula distância do centro
             → inclina o cartão nesse ângulo (máximo ajustável)
             → adiciona um brilho que segue o dedo/mouse</span>
 
@@ -1571,7 +1971,7 @@ desenhar_ruido() <span class="str">→ por cima da página, opacidade variável<
 <span class="cmt"># Clicar no terminal liga o "modo erro" — uma piada:
 # os jeitos que uma IA falha viram o próprio cartaz.</span>
 
-<span class="dia">clicou no cartão?
+<span class="ascii-block">clicou no cartão?
    SE estava normal:
         mostra a tela azul (BSOD)
         troca o tema do site inteiro p/ vermelho
@@ -1600,7 +2000,7 @@ desenhar_ruido() <span class="str">→ por cima da página, opacidade variável<
 <span class="cmt"># O formulário NÃO manda e-mail nem usa servidor.
 # Ele monta um texto e abre o WhatsApp já preenchido.</span>
 
-<span class="dia">apertou enviar →
+<span class="ascii-block">apertou enviar →
    lê os campos (nome, contato, máquina, respostas)
    monta a frase:  "Olá Thi! Tenho interesse..."
    abre:  wa.me/55SEUNUMERO?text=ESSA-FRASE
@@ -1633,10 +2033,198 @@ window.open(`https://wa.me/5521992741982?text=${waText}`, '_blank');</pre></div>
 (function () {
   'use strict';
 
-  /* snapshot pristino do arquivo — capturado ANTES de qualquer
-     mutação do JS (marquee/terminal vazios, sem modo erro). É isto
-     que o botão "baixar" exporta: uma cópia limpa e re-executável. */
+  /* ── SNAPSHOT PRISTINO ───────────────────────────────────────────────
+     Capturado AQUI, antes de qualquer mutação do JS (marquee em loop,
+     terminal preenchido, modo erro ativo, etc.).
+     Isso garante que o arquivo baixado é idêntico ao original —
+     abre no navegador, executa do zero, sem estado "sujo".            */
   const PRISTINE = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+
+  /* ── INJEÇÃO DE COMENTÁRIOS ──────────────────────────────────────────
+     Recebe o HTML pristino (string) e devolve a mesma string com blocos
+     de comentário inseridos em pontos estratégicos.
+     Usa simples String.replace() em marcadores únicos — sem parsear HTML.
+     Cada comentário explica: O QUÊ, POR QUÊ, e qual armadilha evita.   */
+  function injectComments(html) {
+
+    const patches = [
+
+      /* ── 1. ROOT .pb ─────────────────────────────────────────────── */
+      ['id="pb"',
+`<!-- ═══════════════════════════════════════════════════════════════
+  ROOT CONTAINER: .pb
+  ──────────────────────────────────────────────────────────────────
+  • overflow-x: clip (não "hidden") → "clip" evita criar um novo
+    Bloco de Formatação (BFC) que congela o scroll no iOS Safari.
+    "hidden" fazia a página travar ao fazer swipe vertical no iPhone.
+
+  • min-height: 100svh → "svh" = Small Viewport Height, desconta a
+    barra de endereços do Chrome/Safari mobile que some ao rolar.
+    "100vh" incluía essa barra, causando scroll indesejado no topo.
+
+  • color-scheme: light → força a scrollbar nativa do Chrome a usar
+    o tema claro. Sem isso, no modo escuro do SO, a barra ficava
+    preta mesmo com o site sendo claro.
+
+  • .pb.error → quando o JS adiciona a classe "error" a este elemento,
+    TODO o visual muda em cascata (cores, fontes, animações) via CSS.
+    Um modificador, zero JavaScript de estilo.
+════════════════════════════════════════════════════════════════ -->
+id="pb"`],
+
+      /* ── 2. HERO GRID ────────────────────────────────────────────── */
+      ['class="hero-grid"',
+`<!-- ═══════════════════════════════════════════════════════════════
+  HERO GRID: layout responsivo sem media queries
+  ──────────────────────────────────────────────────────────────────
+  grid-template-columns: 1fr clamp(220px, 42%, 320px)
+
+  • A coluna de texto (1fr) ocupa todo o espaço disponível.
+  • A coluna do cartão usa clamp(): nunca menor que 220px,
+    nunca maior que 320px — cabe em qualquer tela sem breakpoints.
+  • min-width: 0 na coluna de texto → impede que texto longo
+    "empurre" o grid além do viewport (bug clássico de grid+texto).
+════════════════════════════════════════════════════════════════ -->
+class="hero-grid"`],
+
+      /* ── 3. CARD ─────────────────────────────────────────────────── */
+      ['id="cardWrap"',
+`<!-- ═══════════════════════════════════════════════════════════════
+  CARTÃO 3D COM TILT + TOQUE
+  ──────────────────────────────────────────────────────────────────
+  • transform-style: preserve-3d → ativa o espaço 3D real no CSS.
+    Sem isso, rotateX/rotateY viram transformações 2D achatadas.
+
+  • touch-action: pan-y → diz ao Android/iOS que scroll vertical é
+    do navegador. Sem isso, o toque no cartão travava o scroll da
+    página inteira.
+
+  • Detecção de eixo no touchmove (JS):
+      se deslocamento vertical > horizontal → scroll normal, sem tilt
+      se deslocamento horizontal > vertical → tilt do cartão
+    Evita o conflito: ao rolar a página, o cartão não treme.
+
+  • O gradiente de glare (#glare) segue a posição do ponteiro em
+    tempo real via CSS custom property (--mx, --my), sem repintar
+    layout — só compositor (GPU), sem jank.
+════════════════════════════════════════════════════════════════ -->
+id="cardWrap"`],
+
+      /* ── 4. ÍCONES + TOOLTIP ─────────────────────────────────────── */
+      ['class="p-icons"',
+`<!-- ═══════════════════════════════════════════════════════════════
+  SISTEMA DE ÍCONES + TOOLTIP
+  ──────────────────────────────────────────────────────────────────
+  • Cada .ico-wrap tem data-tip (texto) e data-tip-id (chave).
+    O JS usa esses atributos para popular um único tooltip global
+    (#tip2) — sem duplicar HTML para cada ícone.
+
+  • CURSOR ROBÔ: em vez do cursor padrão "help" (❓), usamos um SVG
+    inline embutido em data-URI no CSS (cursor: url('data:...')).
+    Dois estados: neutro (boca reta) e smile (boca curva no :active
+    e em pulso a cada 4s). Olhos são pontos pretos simples.
+
+  • .ico-flag e .ico-badge são filhos absolute do .ico-wrap,
+    posicionados via top: calc(100% + 1px) — ficam logo abaixo do
+    ícone sem afetar o layout dos vizinhos.
+
+  POINTER EVENTS (por que não mouseenter/touchstart separados):
+  • Chrome Android gera um "mouseenter" sintético logo após um touch.
+    Isso abria o tooltip ao toque E depois novamente ao "mouse" falso.
+  • Solução: Pointer Events API com filtro por pointerType:
+      'mouse'         → hover com delay de 500ms (tempo de alcançar o link)
+      'touch'/'pen'   → tap: toggle show/hide, auto-oculta em 3.2s
+════════════════════════════════════════════════════════════════ -->
+class="p-icons"`],
+
+      /* ── 5. TOOLTIP ──────────────────────────────────────────────── */
+      ['id="tip2"',
+`<!-- ═══════════════════════════════════════════════════════════════
+  TOOLTIP GLOBAL (#tip2)
+  ──────────────────────────────────────────────────────────────────
+  Esta é a SEGUNDA geração do sistema de tooltip.
+  A primeira tentativa usava :hover CSS + um engine IIFE com
+  classList.visible — funcionava no desktop, mas quebrava no Android
+  (mouseenter sintético após touch) e no iOS (sticky hover).
+
+  Princípio aplicado: "não tente consertar o que existe,
+  crie uma camada simples por cima e desative o legado."
+
+  • position: fixed, z-index: 10000 → flutua sobre tudo,
+    inclusive sobre o card 3D com transform-style: preserve-3d.
+
+  • visibility: hidden/visible (não display: none) → permite medir
+    largura/altura do tooltip antes de posicioná-lo. Com display:none
+    as dimensões são 0 e o cálculo de posição falha.
+
+  • max-width: min(260px, calc(100vw - 24px)) → no mobile,
+    o tooltip nunca ultrapassa a tela (24px de margem total).
+════════════════════════════════════════════════════════════════ -->
+id="tip2"`],
+
+      /* ── 6. MODAL PRINCIPAL ──────────────────────────────────────── */
+      ['id="modalBg"',
+`<!-- ═══════════════════════════════════════════════════════════════
+  MODAL DE INTERESSE
+  ──────────────────────────────────────────────────────────────────
+  • Fecha ao clicar no fundo (modalBg) MAS não ao clicar dentro do
+    conteúdo (modalWin) — verificado com e.target === modalBg.
+  • Autofill do Chrome injeta fundo azul/amarelo nos inputs.
+    Suprimido com -webkit-box-shadow inset + -webkit-text-fill-color.
+  • O campo de nome usa um placeholder que muda em tempo real
+    via JS (digitação) para dar feedback visual imediato.
+════════════════════════════════════════════════════════════════ -->
+id="modalBg"`],
+
+      /* ── 7. BSOD / ERROR MODE ────────────────────────────────────── */
+      ['id="bsod"',
+`<!-- ═══════════════════════════════════════════════════════════════
+  EASTER EGG: MODO ERRO (BSOD)
+  ──────────────────────────────────────────────────────────────────
+  Ativado por clique no cartão ou no botão play do terminal.
+  O JS adiciona .error ao .pb root — a partir daí é só CSS:
+
+  • Fontes mudam para monospace (Space Mono)
+  • Cores invertem para paleta BSOD (azul escuro, texto branco)
+  • Scrollbar muda de cor (Firefox via scrollbar-color no html.err)
+  • Textos ficam menores (fonte mono é mais larga que a proporional)
+  • .ico-flag e .ico-badge somem (não fazem sentido no modo erro)
+  • O próprio BSOD (#bsod) aparece com opacity: 1
+
+  Por que um modificador de classe no root e não JS mudando cada
+  elemento? Porque CSS cascata: uma classe, zero lógica de JS pra
+  estilo. Fácil reverter, fácil inspecionar.
+════════════════════════════════════════════════════════════════ -->
+id="bsod"`],
+
+      /* ── 8. SCROLLBAR ─────────────────────────────────────────────── */
+      ['scrollbar-color:',
+`/* ══════════════════════════════════════════════════════════════════
+   SCROLLBAR PERSONALIZADA
+   ────────────────────────────────────────────────────────────────
+   Dois sistemas distintos (não há propriedade universal ainda):
+
+   Firefox: scrollbar-color no <html> — dois valores: thumb / track.
+            Precisa estar no root, não no .pb — Firefox ignora em
+            elementos filhos que não são o scroll container raiz.
+
+   WebKit (Chrome/Safari): ::webkit-scrollbar-thumb com
+            background-clip: padding-box e border transparente —
+            cria o efeito "thumbazinha flutuante" sem tocar a track.
+            O border não é visível, só cria espaçamento ao redor.
+═══════════════════════════════════════════════════════════════ */
+scrollbar-color:`],
+
+    ];
+
+    /* aplica cada patch na ordem */
+    let out = html;
+    for (const [marker, replacement] of patches) {
+      /* só substitui a PRIMEIRA ocorrência — marcadores são únicos */
+      out = out.replace(marker, replacement);
+    }
+    return out;
+  }
 
   /* ── refs ─────────────────────────────────────────── */
   const pb          = document.getElementById('pb');
@@ -1647,7 +2235,6 @@ window.open(`https://wa.me/5521992741982?text=${waText}`, '_blank');</pre></div>
   const bsod        = document.getElementById('bsod');
   const glare       = document.getElementById('glare');
   const termBody    = document.getElementById('termBody');
-  const scrollCue   = document.getElementById('scrollCue');
   const btnInterest = document.getElementById('btnInterest');
   const modalBg     = document.getElementById('modalBg');
   const modalClose  = document.getElementById('modalClose');
@@ -1784,13 +2371,16 @@ window.open(`https://wa.me/5521992741982?text=${waText}`, '_blank');</pre></div>
     const gy = ((e.clientY - r.top)  / r.height * 100).toFixed(1);
 
     if (bsodActive) {
-      /* facho reflexivo no plano azul */
-      glare.style.background = `linear-gradient(115deg,
-        transparent                        ${Number(gx) - 28}%,
-        rgba(220,230,255,.16)              ${Number(gx) - 10}%,
-        rgba(255,255,255,.40)              ${Number(gx)     }%,
-        rgba(220,230,255,.16)              ${Number(gx) + 10}%,
-        transparent                        ${Number(gx) + 28}%)`;
+      /* facho reflexivo no plano azul — mais sutil, responsivo a X, Y e rotação (±20deg) */
+      const glareGx = Number(gx) + ((Number(gx) - 50) * 0.06);
+      const glareGy = Number(gy) + ((Number(gy) - 50) * 0.06);
+      const glareRotation = ((Number(gx) - 50) / 50) * 20;
+      glare.style.background = `linear-gradient(${115 + glareRotation}deg,
+        transparent                        ${glareGx - 28}%,
+        rgba(220,230,255,.08)              ${glareGx - 10}%,
+        rgba(255,255,255,.20)              ${glareGx}%,
+        rgba(220,230,255,.08)              ${glareGx + 10}%,
+        transparent                        ${glareGx + 28}%)`;
       glare.style.mixBlendMode = 'screen';
     } else {
       /* brilho radial suave */
@@ -1805,6 +2395,62 @@ window.open(`https://wa.me/5521992741982?text=${waText}`, '_blank');</pre></div>
     card.style.transform = 'rotateX(0deg) rotateY(0deg)';
     glare.style.background = 'none';
   });
+
+  /* ── TOUCH TILT (Android/iOS) — só em gesto horizontal ──
+     Gesto vertical = scroll da página (sem tilt, sem jank).
+     Gesto horizontal = exploração do card (tilt suave).
+     A decisão é feita uma vez por gesto, no primeiro movimento. */
+  var tStartX = 0, tStartY = 0, tAxis = 'undecided';
+  var AXIS_THRESHOLD = 8; /* px até decidir a direção */
+
+  cardWrap.addEventListener('touchstart', function (e) {
+    var t = e.touches[0];
+    tStartX = t.clientX;
+    tStartY = t.clientY;
+    tAxis   = 'undecided';
+  }, { passive: true });
+
+  cardWrap.addEventListener('touchmove', function (e) {
+    var touch = e.touches[0];
+
+    /* decide o eixo dominante uma vez */
+    if (tAxis === 'undecided') {
+      var adx = Math.abs(touch.clientX - tStartX);
+      var ady = Math.abs(touch.clientY - tStartY);
+      if (Math.max(adx, ady) < AXIS_THRESHOLD) return; /* ainda indeciso */
+      tAxis = ady > adx ? 'scroll' : 'tilt';
+    }
+    /* gesto vertical: deixa a página rolar, não mexe no card */
+    if (tAxis === 'scroll') return;
+
+    var r  = card.getBoundingClientRect();
+    var cx = r.left + r.width  / 2;
+    var cy = r.top  + r.height / 2;
+    var dx = (touch.clientX - cx) / (r.width  / 2);
+    var dy = (touch.clientY - cy) / (r.height / 2);
+    var rx = -dy * (tiltMax * 0.5);
+    var ry =  dx * (tiltMax * 0.5);
+    card.style.transform = 'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
+
+    var gx = ((touch.clientX - r.left) / r.width  * 100).toFixed(1);
+    var gy = ((touch.clientY - r.top)  / r.height * 100).toFixed(1);
+    if (bsodActive) {
+      var glareRotation = ((Number(gx) - 50) / 50) * 20;
+      glare.style.background = 'linear-gradient(' + (115 + glareRotation) + 'deg, transparent ' + (Number(gx) - 28) + '%, rgba(255,255,255,.14) ' + gx + '%, transparent ' + (Number(gx) + 28) + '%)';
+      glare.style.mixBlendMode = 'screen';
+    } else {
+      glare.style.background = 'radial-gradient(circle at ' + gx + '% ' + gy + '%, rgba(255,255,255,.12) 0%, rgba(255,255,255,0) 62%)';
+      glare.style.mixBlendMode = 'normal';
+    }
+  }, { passive: true });
+
+  cardWrap.addEventListener('touchend', function () {
+    if (tAxis === 'tilt') {
+      card.style.transform = 'rotateX(0deg) rotateY(0deg)';
+      glare.style.background = 'none';
+    }
+    tAxis = 'undecided';
+  }, { passive: true });
 
   /* ── GLITCH TEXT ──────────────────────────────────── */
   /* Quando BSOD ativa: tipografia serif → mono (via CSS var)
@@ -1881,12 +2527,17 @@ window.open(`https://wa.me/5521992741982?text=${waText}`, '_blank');</pre></div>
      Função única: card (terminal) e botão play/pause do
      rodapé chamam o mesmo toggle; o ícone fica sincronizado
      mesmo quando o disparo vem do card. */
+  var themeColorMeta = document.getElementById('themeColor');
   function setErrorMode(on) {
     bsodActive = on;
     bsod.classList.toggle('show', on);
     pb.classList.toggle('error', on);
     mqBar.classList.toggle('siren', on);
     setMarquee(on);
+    /* Chrome: atualiza theme-color com a cor do papel */
+    if (themeColorMeta) themeColorMeta.setAttribute('content', on ? '#F2E0D8' : '#FDFCF8');
+    /* scrollbar acompanha o modo erro (classe no <html>) */
+    document.documentElement.classList.toggle('err', on);
     if (on) {
       applyGlitch();
     } else {
@@ -1904,25 +2555,73 @@ window.open(`https://wa.me/5521992741982?text=${waText}`, '_blank');</pre></div>
   card.addEventListener('click', toggleError);
   if (playBtn) playBtn.addEventListener('click', toggleError);
 
-  /* ── SCROLL CUE ───────────────────────────────────── */
-  scrollCue.addEventListener('click', function (e) {
-    e.preventDefault();
-    document.getElementById('programa').scrollIntoView({ behavior: 'smooth' });
-  });
+  /* scroll-cue removido */
 
   /* ── MODAL ────────────────────────────────────────── */
-  btnInterest.addEventListener('click',  () => modalBg.classList.add('open'));
+  btnInterest.addEventListener('click',  () => { modalBg.classList.add('open'); setTimeout(() => modalBg.querySelector('input,textarea'), 50); });
   modalClose .addEventListener('click',  () => modalBg.classList.remove('open'));
   modalBg    .addEventListener('click',  e  => {
     if (e.target === modalBg) modalBg.classList.remove('open');
   });
+
+  /* acessibilidade: fechar modal com Escape */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && modalBg.classList.contains('open')) {
+      modalBg.classList.remove('open');
+    }
+  });
+
+  /* ── CHECK LÚDICO ─────────────────────────────────── */
+  function fieldDone(el) {
+    const field = el.closest('.field');
+    if (!field) return;
+    const ok = (typeof el.value === 'string')
+      ? el.value.trim().length > 0
+      : true; /* radios/checkboxes: qualquer change = done */
+    field.classList.toggle('field--done', ok);
+    /* re-dispara animação da path mesmo se já estava done */
+    if (ok) {
+      const path = field.querySelector('.field-check path');
+      if (path) {
+        path.style.animation = 'none';
+        path.getBoundingClientRect(); /* flush */
+        path.style.animation = '';
+      }
+    }
+  }
+
+  /* inputs e textarea: blur (saiu do campo) */
+  regForm.querySelectorAll('input[type="text"], textarea').forEach(function (el) {
+    el.addEventListener('blur', () => fieldDone(el));
+    /* também ao digitar: remove o check se apagar tudo */
+    el.addEventListener('input', function () {
+      if (el.value.trim().length === 0) el.closest('.field').classList.remove('field--done');
+    });
+  });
+
+  /* radios e checkboxes: change imediato */
+  regForm.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(function (el) {
+    el.addEventListener('change', () => fieldDone(el));
+  });
   /* ── EXPORTAR HTML (rodar offline) ────────────────── */
+  const cbExportComments = document.getElementById('cbExportComments');
+
+  cbExportComments.addEventListener('change', function () {
+    const annotated = this.checked;
+    btnExport.textContent = annotated
+      ? '⤓ baixar este convite (.html) — anotado'
+      : '⤓ baixar este convite (.html)';
+  });
+
   btnExport.addEventListener('click', function () {
-    const blob = new Blob([PRISTINE], { type: 'text/html;charset=utf-8' });
+    const annotated = cbExportComments && cbExportComments.checked;
+    const content   = annotated ? injectComments(PRISTINE) : PRISTINE;
+    const filename  = annotated ? 'convite-ia-local-anotado.html' : 'convite-ia-local.html';
+    const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
-    a.download = 'convite-ia-local.html';
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -2046,19 +2745,26 @@ window.open(`https://wa.me/5521992741982?text=${waText}`, '_blank');</pre></div>
         encSep +
         '<span class="v-msg">' + encMsg + '</span>';
     }
-    /* input + keyup + compositionend cobre mobile (IME) e desktop */
-    ['input', 'keyup', 'compositionend'].forEach(function (ev) {
+    /* input + keyup + change + paste + compositionend — cobre Android IME, iOS e desktop */
+    ['input', 'keyup', 'change', 'paste', 'compositionend', 'compositionupdate'].forEach(function (ev) {
       waName .addEventListener(ev, renderWa);
       waPhone.addEventListener(ev, renderWa);
       waMsg  .addEventListener(ev, renderWa);
     });
+    /* fallback: polling leve pra Android que engole eventos */
+    var waLastVal = '';
+    setInterval(function () {
+      var cur = waName.value + waPhone.value + waMsg.value;
+      if (cur !== waLastVal) { waLastVal = cur; renderWa(); }
+    }, 150);
     renderWa();
   }
 
   /* ── EMOJI SWAP — substitui ícones no modo erro ─────── */
-  const EMOJI_POOL = ['😇','😈','👹','👿','🤖','🦾','❓','❤️','🔥','💸','💸','💸'];
-  /* IDs dos wrappers de ícone — 6 no total */
-  const EMOJI_IDS  = ['eGpt','eClaude','eQwen','eOllama','eMac','eWin'];
+  /* 🤖 entra 2× (mais frequente); o robô alterna normal/vermelho a cada aparição */
+  const EMOJI_POOL = ['😇','😈','👹','👿','🤖','🦾','🤖','❤️','🔥','💸','💸','💸'];
+  /* IDs dos wrappers de ícone */
+  const EMOJI_IDS  = ['eGpt','eClaude','eQwen','eMaritaca','eOllama','eMac','eWin'];
   let emojiTimers  = [];
 
   function startEmojiSwap() {
@@ -2066,7 +2772,11 @@ window.open(`https://wa.me/5521992741982?text=${waText}`, '_blank');</pre></div>
       const el = document.getElementById(id);
       if (!el) return;
       function tick() {
-        el.textContent = EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)];
+        const em = EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)];
+        el.textContent = em;
+        /* robô alterna entre normal e vermelho a cada vez que aparece */
+        if (em === '🤖') el.classList.toggle('red');
+        else el.classList.remove('red');
         /* intervalo rápido: 150–500 ms */
         emojiTimers.push(setTimeout(tick, 150 + Math.random() * 350));
       }
@@ -2090,10 +2800,15 @@ window.open(`https://wa.me/5521992741982?text=${waText}`, '_blank');</pre></div>
 
   /* ── DOCK EFFECT nos ícones de LLMs e Terminais ── */
   (function () {
-    /* escalas sutis: self=1.35, vizinho=1.15, dois afastados=1.05 */
-    const SCALES = [1.35, 1.15, 1.05, 1.0];
+    /* escalas: self=1.38, vizinho=1.18, dois afastados=1.08, base=1.02 */
+    const SCALES = [1.38, 1.18, 1.08, 1.02];
+    const BASE_SCALE = 1.02;
+    const MAX_PROXIMITY_SCALE = 1.22; /* Fase 1: aumentado */
+    const PROXIMITY_RADIUS = 120; /* Fase 1: aumentado de 80 */
 
-    document.querySelectorAll('.p-icons').forEach(function (group) {
+    const allGroups = Array.from(document.querySelectorAll('.p-icons'));
+
+    allGroups.forEach(function (group) {
       const wraps = Array.from(group.querySelectorAll('.ico-wrap'));
       if (!wraps.length) return;
 
@@ -2102,24 +2817,231 @@ window.open(`https://wa.me/5521992741982?text=${waText}`, '_blank');</pre></div>
           const dist = Math.abs(i - activeIdx);
           const scale = SCALES[Math.min(dist, SCALES.length - 1)];
           w.style.transform = 'scale(' + scale + ')';
+          w.style.opacity = '1';
+          w.style.filter = 'drop-shadow(0 4px 8px rgba(0,0,0,.12))';
+        });
+      }
+
+      function applyProximity(mouseX) {
+        /* Fase 1: raio 120px, easing out, escala até 1.22, opacity feedback */
+        wraps.forEach(function (w, i) {
+          const iconRect = w.getBoundingClientRect();
+          const iconCenterX = iconRect.left + iconRect.width / 2;
+          const distance = Math.abs(mouseX - iconCenterX);
+
+          /* easing out: começa rápido, termina suave */
+          const influence = Math.max(0, 1 - (distance / PROXIMITY_RADIUS));
+          const easeOut = influence * influence; /* ease-out effect */
+          const scale = BASE_SCALE + (easeOut * (MAX_PROXIMITY_SCALE - BASE_SCALE));
+
+          w.style.transform = 'scale(' + Math.min(scale, MAX_PROXIMITY_SCALE) + ')';
+          /* opacity feedback: ícones vizinhos ficam levemente mais opacos */
+          w.style.opacity = String(0.92 + (easeOut * 0.08));
+          /* micro-sombra ao escalar */
+          w.style.filter = 'drop-shadow(0 ' + (2 + easeOut * 6) + 'px ' + (4 + easeOut * 8) + 'px rgba(0,0,0,' + (0.08 + easeOut * 0.06) + '))';
         });
       }
 
       function resetDock() {
-        wraps.forEach(function (w) { w.style.transform = 'scale(1)'; });
+        wraps.forEach(function (w) {
+          w.style.transform = 'scale(' + BASE_SCALE + ')';
+          w.style.opacity = '1';
+          w.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,.04))';
+        });
+      }
+
+      function applyInhibit() {
+        /* Fase 2: Grupo inativo recua levemente quando outro está ativo */
+        allGroups.forEach(function (otherGroup) {
+          if (otherGroup === group) return;
+          const otherWraps = otherGroup.querySelectorAll('.ico-wrap');
+          otherWraps.forEach(function (w) {
+            w.style.transform = 'scale(0.96)';
+            w.style.opacity = '0.7';
+            w.style.filter = 'drop-shadow(0 1px 2px rgba(0,0,0,.04))';
+          });
+        });
+      }
+
+      function resetInhibit() {
+        /* Restaura outros grupos */
+        allGroups.forEach(function (otherGroup) {
+          if (otherGroup === group) return;
+          const otherWraps = otherGroup.querySelectorAll('.ico-wrap');
+          otherWraps.forEach(function (w) {
+            w.style.transform = 'scale(' + BASE_SCALE + ')';
+            w.style.opacity = '1';
+            w.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,.04))';
+          });
+        });
       }
 
       wraps.forEach(function (w, i) {
-        /* mouse */
-        w.addEventListener('mouseenter', function () { applyDock(i); });
-        w.addEventListener('mouseleave', resetDock);
-        /* touch — aplica no touchstart, reseta após 600ms */
+        /* mouse direto no ícone */
+        w.addEventListener('mouseenter', function () {
+          applyDock(i);
+          applyInhibit();
+        });
+        w.addEventListener('mouseleave', function () {
+          resetDock();
+          resetInhibit();
+        });
+        /* touch */
         w.addEventListener('touchstart', function () {
           applyDock(i);
-          setTimeout(resetDock, 600);
+          applyInhibit();
+          setTimeout(function () {
+            resetDock();
+            resetInhibit();
+          }, 600);
         }, { passive: true });
       });
+
+      /* mousemove no grupo — atração proximidade */
+      group.addEventListener('mousemove', function (e) {
+        if (document.elementFromPoint(e.clientX, e.clientY).closest('.ico-wrap')) {
+          return; /* mouse em ícone, dock direto cuida */
+        }
+        applyProximity(e.clientX);
+        applyInhibit();
+      });
+
+      group.addEventListener('mouseleave', function () {
+        resetDock();
+        resetInhibit();
+      });
     });
+  })();
+
+  /* ═══════════════════════════════════════════════════════════
+     TOOLTIP v4 — camada nova e independente (Pointer Events)
+     Mouse: hover mostra/esconde · Touch: tap alterna, 3.2s auto-hide.
+     Filtra por pointerType → sem eventos sintéticos duplicados.
+     Conteúdo (data-tip) + link oficial (data-tip-id) + ícone reaproveitados.
+     ═══════════════════════════════════════════════════════════ */
+  (function () {
+    var MARGIN = 12, GAP = 10, AUTO = 3200, HOVER_OUT = 600;
+
+    var EXT = '<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">'
+            + '<path d="M1 9L9 1M9 1H4M9 1V6" stroke="currentColor" stroke-width="1.5"'
+            + ' stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    var LINKS = {
+      chatgpt:  { label: 'chatgpt.com',  url: 'https://chatgpt.com'   },
+      claude:   { label: 'claude.ai',    url: 'https://claude.ai'     },
+      qwen:     { label: 'qwen.ai',      url: 'https://qwen.ai'       },
+      maritaca: { label: 'maritaca.ai',  url: 'https://www.maritaca.ai' },
+      ollama:   { label: 'ollama.com',   url: 'https://ollama.com'    }
+    };
+
+    /* cria o elemento próprio da camada */
+    var tip = document.createElement('div');
+    tip.id = 'tip2';
+    tip.setAttribute('role', 'tooltip');
+    document.body.appendChild(tip);
+
+    var active  = null;   /* wrap atualmente mostrado */
+    var autoT   = null;   /* timer de auto-hide (touch) */
+    var hideT   = null;   /* timer de hide com folga (hover) */
+
+    function build(wrap) {
+      var text = (wrap.getAttribute('data-tip') || '').trim();
+      var id   = wrap.getAttribute('data-tip-id') || '';
+      var link = LINKS[id];
+      var html = text;
+      if (link) {
+        html += ' <a href="' + link.url + '" target="_blank" rel="noopener noreferrer">'
+              + link.label + EXT + '</a>';
+      }
+      return html;
+    }
+
+    function show(wrap) {
+      clearTimeout(hideT);
+      clearTimeout(autoT);
+      tip.innerHTML = build(wrap);
+      tip.classList.toggle('err', !!document.querySelector('.pb.error'));
+
+      /* mede com o elemento renderizado (sempre display:block; só opacity muda) */
+      var tw = tip.offsetWidth;
+      var th = tip.offsetHeight;
+      var r  = wrap.getBoundingClientRect();
+      var vw = window.innerWidth;
+
+      /* horizontal centrado + clamp nas margens */
+      var lx = r.left + r.width / 2 - tw / 2;
+      lx = Math.max(MARGIN, Math.min(lx, vw - tw - MARGIN));
+      /* vertical acima; vira pra baixo se não couber */
+      var ty = r.top - th - GAP;
+      if (ty < MARGIN) ty = r.bottom + GAP;
+
+      tip.style.left = lx + 'px';
+      tip.style.top  = ty + 'px';
+      tip.classList.add('on');
+      active = wrap;
+    }
+
+    function hide() {
+      clearTimeout(hideT);
+      clearTimeout(autoT);
+      tip.classList.remove('on');
+      active = null;
+    }
+
+    document.querySelectorAll('.p-icons .ico-wrap').forEach(function (wrap) {
+      /* MOUSE — hover entra/sai */
+      wrap.addEventListener('pointerenter', function (e) {
+        if (e.pointerType !== 'mouse') return;
+        show(wrap);
+      });
+      wrap.addEventListener('pointerleave', function (e) {
+        if (e.pointerType !== 'mouse') return;
+        /* folga para o mouse alcançar o link dentro do tooltip */
+        hideT = setTimeout(function () { if (!tip.matches(':hover')) hide(); }, HOVER_OUT);
+      });
+
+      /* TOUCH/PEN — tap alterna */
+      wrap.addEventListener('pointerup', function (e) {
+        if (e.pointerType === 'mouse') return;
+        if (active === wrap) { hide(); }
+        else { show(wrap); autoT = setTimeout(hide, AUTO); }
+      });
+    });
+
+    /* mouse dentro do tooltip: não fecha (permite clicar o link) */
+    tip.addEventListener('pointerenter', function (e) {
+      if (e.pointerType === 'mouse') clearTimeout(hideT);
+    });
+    tip.addEventListener('pointerleave', function (e) {
+      if (e.pointerType === 'mouse') hide();
+    });
+    /* tocar dentro do tooltip (no link) cancela o auto-hide */
+    tip.addEventListener('pointerdown', function () { clearTimeout(autoT); });
+
+    /* clicar/tocar fora de ícone e tooltip: fecha */
+    document.addEventListener('pointerdown', function (e) {
+      if (active && !e.target.closest('.p-icons .ico-wrap') && !e.target.closest('#tip2')) {
+        hide();
+      }
+    }, { passive: true });
+
+    /* rolar ou redimensionar: fecha (posição ficaria obsoleta) */
+    window.addEventListener('scroll', hide, { passive: true });
+    window.addEventListener('resize', hide, { passive: true });
+  })();
+
+  /* ── CURSOR ROBÔ — pulso de sorriso a cada 4s ──
+     Aplica .smile (cursor sorrindo) por 700ms; só visível no ícone sob o mouse.
+     O sorriso por clique já é coberto por :active no CSS. ── */
+  (function () {
+    var robos = document.querySelectorAll('.p-icons .ico-wrap');
+    if (!robos.length) return;
+    setInterval(function () {
+      robos.forEach(function (w) { w.classList.add('smile'); });
+      setTimeout(function () {
+        robos.forEach(function (w) { w.classList.remove('smile'); });
+      }, 700);
+    }, 4000);
   })();
 
   /* ── COPIAR TRECHOS DE CÓDIGO REAL ── */
@@ -2168,7 +3090,8 @@ window.open(`https://wa.me/5521992741982?text=${waText}`, '_blank');</pre></div>
     const llm     = (document.querySelector('input[name="llm"]:checked')      || {}).value || '—';
     const dias    = Array.from(document.querySelectorAll('input[name="dias"]:checked'))
                          .map(c => c.value).join(', ') || '—';
-    const obs     = (document.getElementById('f-obs').value.trim()) || '—';
+    const obs        = (document.getElementById('f-obs').value.trim()) || '—';
+    const designMoney = document.getElementById('cbDesignMoney') && document.getElementById('cbDesignMoney').checked;
 
     const waText = encodeURIComponent(
 `Olá Thi! Tenho interesse no bate-papo de IA local · 24 jun ✊
@@ -2179,14 +3102,47 @@ Máquina / sistema: ${machine}
 Já abriu o terminal?: ${term}
 Sabe o que é uma LLM?: ${llm}
 Outros dias possíveis: ${dias}
-Comentário sobre o site: ${obs}`
+Comentário sobre o site: ${obs}${designMoney ? '\n\n💡 Interesse em trocar ideias sobre fazer dinheiro com design e tecnologia: sim' : ''}`
     );
 
     window.open(`https://wa.me/5521992741982?text=${waText}`, '_blank');
     modalBg.classList.remove('open');
   });
 
+  /* ── ANALYTICS: eventos custom (GoatCounter) ──────────
+     item 2: ficou > 60s   ·   item 3: clicou "tenho interesse"
+     count.js carrega async; estes disparam depois (timer/clique)
+     → guard evita erro se ainda não carregou. Não envia dado
+     pessoal: só um "tick" anônimo agregado por path.            */
+  function gcEvent(path, title) {
+    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+      window.goatcounter.count({ path: path, title: title, event: true });
+    }
+  }
+  /* item 2 — permanência > 60s (uma vez por sessão) */
+  setTimeout(function () { gcEvent('stayed-60s', 'Ficou +60s'); }, 60000);
+  /* item 3 — 1º clique em "tenho interesse" (só o primeiro) */
+  let interesseTracked = false;
+  btnInterest.addEventListener('click', function () {
+    if (!interesseTracked) {
+      gcEvent('click-interesse', 'Clicou tenho interesse');
+      interesseTracked = true;
+    }
+  });
+
 })();
 </script>
+
+<!-- ══════════════════════════════════════════════════════════════
+     ANALYTICS — GoatCounter (open-source, privacy-first, sem cookies)
+     ──────────────────────────────────────────────────────────────
+     ITEM 1: page views = automático (só este script).
+     SETUP (1x): crie conta grátis em https://www.goatcounter.com
+     → você recebe um código, ex: convite-ia.goatcounter.com
+     → troque SEU-CODIGO abaixo por esse código.
+     Migração futura p/ self-host: mesma ferramenta, só muda a URL.
+══════════════════════════════════════════════════════════════ -->
+<script data-goatcounter="https://entrepausa.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
